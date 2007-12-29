@@ -1,0 +1,51 @@
+wiggle (0.6-6) unstable; urgency=low
+
+  * Take sole ownership of the package, Nicolas is unresponsive
+  * Add Homepage field to control header
+  * Change to dh compat level 5
+  * Do not ignore errors in make clean
+  * Update Standards-Version to 3.7.3, no changes needed
+  * Update the FSF address in the debian/copyright file
+  * Switch to use the git upstream
+
+ -- Baruch Even <baruch@debian.org>  Sat, 29 Dec 2007 21:22:49 +0200
+
+wiggle (0.6-5) unstable; urgency=low
+
+  * Adopt this package (closes: #233661)
+  * Modify build to use dpatch 
+  * New Standard: 3.6.1.1
+      - No need to change
+  * Add upstream fixes 004ExtractFix 005Pchanges (006NoDebug is already
+    applied)
+  * Add the notes files to the documentation
+
+ -- Nicolas Thomas <nthomas@free.fr>  Sat,  4 Dec 2004 22:42:17 +0100
+
+wiggle (0.6-4) unstable; urgency=low
+
+  * Orphan this package
+
+ -- Igor Genibel <igenibel@debian.org>  Thu, 19 Feb 2004 11:07:37 +0100
+
+wiggle (0.6-3) unstable; urgency=low
+
+  * Fix upstream bug (Thanks Jan Hudec <bulb@ucw.cz>)
+      - upstream provided a patch
+  * New Standard: 3.6.0
+      - No need to change
+
+ -- Igor Genibel <igenibel@debian.org>  Sat, 12 Jul 2003 10:39:15 +0200
+
+wiggle (0.6-2) unstable; urgency=low
+
+  * Add new build dependency to groff (Closes: #197994)
+
+ -- Igor Genibel <igenibel@debian.org>  Thu, 19 Jun 2003 09:31:14 +0200
+
+wiggle (0.6-1) unstable; urgency=low
+
+  * Initial Release. (Closes: #196862)
+
+ -- Igor Genibel <igenibel@debian.org>  Tue, 10 Jun 2003 12:24:49 +0200
+

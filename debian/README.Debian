@@ -1,0 +1,12 @@
+wiggle for Debian
+-----------------
+
+Two patches are applied:
+- 001NoQuietTime
+- 003Recommit
+
+The package also provides a perl script developed by Neil Brown 
+that is useful for manipulating patches. You can reach it at 
+/usr/share/doc/wiggle/contrib
+
+ -- Igor Genibel <igenibel@debian.org>, Tue, 10 Jun 2003 12:24:49 +0200
