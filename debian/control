@@ -1,14 +1,14 @@
 Source: wiggle
 Section: utils
 Priority: optional
-Maintainer: Baruch Even <baruch@debian.org>
-Build-Depends: debhelper (>> 5.0.0), time, groff
-Standards-Version: 3.7.3
+Maintainer: Jari Aalto <jari.aalto@cante.net>
+Build-Depends: debhelper (>= 7.1), time, groff
+Standards-Version: 3.8.4
 Homepage: http://cgi.cse.unsw.edu.au/~neilb/source/wiggle/
 
 Package: wiggle
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: a program for applying patches with conflicting changes
  Wiggle is a program for applying patches that 'patch' cannot
  apply due to conflicting changes in the original.
