@@ -18,8 +18,11 @@ wiggle (0.6-7) unstable; urgency=low
   * debian/source/format
     - New file.
   * debian/wiggle.docs
+    - New file.
+  * debian/wiggle.install
+    - New file.
 
- -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 01:16:59 +0200
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 01:23:58 +0200
 
 wiggle (0.6-6) unstable; urgency=low
 
