@@ -2,14 +2,9 @@
 #export DH_VERBOSE=1
 
 PACKAGE = wiggle
-DOCDIR  = debian/wiggle/usr/share/doc/$(PACKAGE)
 
 override_dh_auto_install:
-	# $(MAKE) install DESTDIR=$(CURDIR)/debian/wiggle
-	dh_auto_install
-
-	install -D -m 755 $(DOCDIR)
-	cp -a p p.help debian/wiggle/usr/share/doc/wiggle/contrib
+	$(MAKE) DESTDIR=debian/$(PACKAGE) install
 
 binary-arch: build install
 	# target: binary-arch - Build architecture-dependent files.
@@ -34,7 +29,6 @@ binary: binary-arch
 %:
 	dh $@
 
-.PHONY: install configure
 .PHONY: binary-arch binary
 
 # End of file
