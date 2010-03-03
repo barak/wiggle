@@ -1,3 +1,26 @@
+wiggle (0.6-7) unstable; urgency=low
+
+  * New maintainer (Closes: #568575).
+    - Move to packaging format "3.0 (quilt)".
+  * debian/control
+    - (Build-Depends): update to debhelper 7.1.
+    - (Depends): add ${misc:Depends}.
+    - (Standards-Version): Update to 3.8.4.
+  * debian/copyright
+    - Update layoyt.
+  * debian/dirs
+    - Deleted. Not needed.
+  * debian/README.Debian
+    - Correct 'perl script' to just script (actually Bourne shell).
+    - Remove indication to patches, not relevant for the end-user.
+  * debian/rules
+    - Update to dh(1).
+  * debian/source/format
+    - New file.
+  * debian/wiggle.docs
+
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 01:16:59 +0200
+
 wiggle (0.6-6) unstable; urgency=low
 
   * Take sole ownership of the package, Nicolas is unresponsive
@@ -13,7 +36,7 @@ wiggle (0.6-6) unstable; urgency=low
 wiggle (0.6-5) unstable; urgency=low
 
   * Adopt this package (closes: #233661)
-  * Modify build to use dpatch 
+  * Modify build to use dpatch
   * New Standard: 3.6.1.1
       - No need to change
   * Add upstream fixes 004ExtractFix 005Pchanges (006NoDebug is already
@@ -48,4 +71,3 @@ wiggle (0.6-1) unstable; urgency=low
   * Initial Release. (Closes: #196862)
 
  -- Igor Genibel <igenibel@debian.org>  Tue, 10 Jun 2003 12:24:49 +0200
-
