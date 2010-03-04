@@ -7,8 +7,8 @@ wiggle (0.6-7) unstable; urgency=low
     - (Depends): add ${misc:Depends}.
     - (Standards-Version): Update to 3.8.4.
   * debian/copyright
-    - Update layoyt.
-    - Document homepage not reachable (Closes: #515124).
+    - Update layout.
+    - Update download URL (Closes: #515124).
   * debian/dirs
     - Deleted. Not needed.
   * debian/patches
@@ -27,7 +27,7 @@ wiggle (0.6-7) unstable; urgency=low
   * debian/wiggle.install
     - New file.
 
- -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 11:00:22 +0200
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 18:08:16 +0200
 
 wiggle (0.6-6) unstable; urgency=low
 
