@@ -1,8 +1,11 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE=1
 
+CFLAGS_EXTRA = -Wall -pedantic
+CC	     = gcc
+
 override_dh_auto_build:
-	$(MAKE) CC=gcc CFLAGS="$(CFLAGS)"
+	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS) $(CFLAGS_EXTRA)"
 
 binary-arch: build install
 	# target: binary-arch - Build architecture-dependent files.
