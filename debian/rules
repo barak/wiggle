@@ -2,7 +2,7 @@
 #export DH_VERBOSE=1
 
 override_dh_auto_build:
-	$(MAKE) CFLAGS="$(CFLAGS)" OptDbg=-02
+	$(MAKE) CC=gcc CFLAGS="$(CFLAGS)"
 
 binary-arch: build install
 	# target: binary-arch - Build architecture-dependent files.
