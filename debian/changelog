@@ -10,6 +10,8 @@ wiggle (0.6-7) unstable; urgency=low
     - Update layoyt.
   * debian/dirs
     - Deleted. Not needed.
+  * debian/patches
+    - Convert inline changes to patches.
   * debian/README.Debian
     - Correct 'perl script' to just script (actually Bourne shell).
     - Remove indication to patches, not relevant for the end-user.
@@ -22,7 +24,7 @@ wiggle (0.6-7) unstable; urgency=low
   * debian/wiggle.install
     - New file.
 
- -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 01:23:58 +0200
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 10:03:52 +0200
 
 wiggle (0.6-6) unstable; urgency=low
 
