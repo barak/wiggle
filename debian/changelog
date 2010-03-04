@@ -18,7 +18,8 @@ wiggle (0.6-7) unstable; urgency=low
     - Remove indication to patches, not relevant for the end-user.
   * debian/rules
     - Update to dh(1).
-    - (CFLAGS): Chnage -Werror to -Wall -pedantic (gcc-4.5 FTBFS; Closes: #565074).
+    - (CFLAGS): Change -Werror to -Wall -pedantic
+      (gcc-4.5 FTBFS; Closes: #565074).
   * debian/source/format
     - New file.
   * debian/wiggle.docs
@@ -26,7 +27,7 @@ wiggle (0.6-7) unstable; urgency=low
   * debian/wiggle.install
     - New file.
 
- -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 10:53:07 +0200
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 11:00:22 +0200
 
 wiggle (0.6-6) unstable; urgency=low
 
