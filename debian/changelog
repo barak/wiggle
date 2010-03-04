@@ -8,6 +8,7 @@ wiggle (0.6-7) unstable; urgency=low
     - (Standards-Version): Update to 3.8.4.
   * debian/copyright
     - Update layoyt.
+    - Document homepage not reachable (Closes: #515124).
   * debian/dirs
     - Deleted. Not needed.
   * debian/patches
@@ -17,6 +18,7 @@ wiggle (0.6-7) unstable; urgency=low
     - Remove indication to patches, not relevant for the end-user.
   * debian/rules
     - Update to dh(1).
+    - (CFLAGS): Chnage -Werror to -Wall -pedantic (gcc-4.5 FTBFS; Closes: #565074).
   * debian/source/format
     - New file.
   * debian/wiggle.docs
@@ -24,7 +26,7 @@ wiggle (0.6-7) unstable; urgency=low
   * debian/wiggle.install
     - New file.
 
- -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 10:03:52 +0200
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 10:53:07 +0200
 
 wiggle (0.6-6) unstable; urgency=low
 
