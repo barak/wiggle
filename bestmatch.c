@@ -346,7 +346,10 @@ void remap(struct best *best, int cnt,
 	int pa,pb;
 	pa=pb=0;
 
-	for (b=1; b<cnt; b++) {
+	if (a1.elcnt == 0 && a2.elcnt == 0) return;
+
+	for (b=1; b<cnt; b++)
+	   if (best[b].val>0) {
 #if 0
 		printf("best %d,%d  %d,%d\n",
 		       best[b].xlo,best[b].ylo,
