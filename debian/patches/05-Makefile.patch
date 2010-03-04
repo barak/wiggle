@@ -1,0 +1,27 @@
+From f1104459541da3c20aabdc3f791ef913c1ae2177 Mon Sep 17 00:00:00 2001
+From: Jari Aalto <jari.aalto@cante.net>
+Date: Thu, 4 Mar 2010 10:58:57 +0200
+Subject: [PATCH] Makefile: (clean): do not delete original source files
+
+
+Signed-off-by: Jari Aalto <jari.aalto@cante.net>
+---
+ Makefile |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 388bf09..fa5526f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -26,7 +26,7 @@ wiggle.man : wiggle.1
+ 	nroff -man wiggle.1 > wiggle.man
+ 
+ clean:
+-	rm -f *.o *.man wiggle .version* version
++	rm -f *.o *.man wiggle
+ 	find . -name core -o -name '*.tmp*' -o -name .tmp | xargs rm -f
+ 
+ install : wiggle wiggle.1
+-- 
+1.7.0
+
