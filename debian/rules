@@ -1,10 +1,8 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE=1
 
-PACKAGE = wiggle
-
-override_dh_auto_install:
-	$(MAKE) DESTDIR=debian/$(PACKAGE) install
+override_dh_auto_build:
+	$(MAKE) CFLAGS="$(CFLAGS)" OptDbg=-02
 
 binary-arch: build install
 	# target: binary-arch - Build architecture-dependent files.
