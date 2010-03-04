@@ -1,10 +1,12 @@
 wiggle (0.6.20100304+git1c5bfa7-1) unstable; urgency=low
 
   * New upstream release.
+  * debian/control
+    - (Vcs-*): new fields.
   * debian/patches
     - (05 Makefile, 02 p.help, 30 dotest): remove. Integrated to upstream.
 
- -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 18:53:04 +0200
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 18:56:00 +0200
 
 iggle (0.6-7) unstable; urgency=low
 
