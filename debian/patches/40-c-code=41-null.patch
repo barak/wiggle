@@ -1,0 +1,28 @@
+From 9ec0d7092e12a77b8a309389cd88c52c99d9a5d7 Mon Sep 17 00:00:00 2001
+From: Jari Aalto <jari.aalto@cante.net>
+Date: Thu, 4 Mar 2010 10:55:37 +0200
+Subject: [PATCH] extract.c: (split_merge): initialize with NULL
+
+
+Signed-off-by: Jari Aalto <jari.aalto@cante.net>
+---
+ extract.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/extract.c b/extract.c
+index 755a725..20f8bab 100644
+--- a/extract.c
++++ b/extract.c
+@@ -184,7 +184,8 @@ int split_merge(struct stream f, struct stream *f1, struct stream *f2, struct st
+ 	int state = 0;
+ 	char *cp, *end;
+ 	struct stream r1,r2,r3;
+-	f1->body = f2->body = f2->body = NULL;
++	f1->body = NULL;
++	f2->body = NULL;
+ 
+ 	r1.body = malloc(f.len);
+ 	r2.body = malloc(f.len);
+-- 
+1.7.0
+
