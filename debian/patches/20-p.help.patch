@@ -1,0 +1,33 @@
+From c8c15c6d5036e6bf1a5b008c65c6edc95519b336 Mon Sep 17 00:00:00 2001
+From: Jari Aalto <jari.aalto@cante.net>
+Date: Thu, 4 Mar 2010 09:43:31 +0200
+Subject: [PATCH] p.help: (recommiy): add documentation
+
+
+Signed-off-by: Jari Aalto <jari.aalto@cante.net>
+---
+ p.help |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
+
+diff --git a/p.help b/p.help
+index fc22772..4c16328 100644
+--- a/p.help
++++ b/p.help
+@@ -248,6 +248,14 @@ openall
+  discarded.  This is part of the preparation for incorporating
+  upstream changes.
+ 
++recommit
++ Usage: p recommit patchname
++
++ This command will re-apply and re-commit removed patches
++ that successfully apply until the names patch has been applied.
++ Patches are applied in reverse order, which is consistant with
++ the order in which they were removed.
++
+ snapshot
+  Usage: p snapshot
+ 
+-- 
+1.7.0
+
