@@ -1,5 +1,5 @@
 Source: wiggle
-Section: utils
+Section: vcs
 Priority: optional
 Maintainer: Jari Aalto <jari.aalto@cante.net>
 Build-Depends: debhelper (>= 7.1), time, groff
