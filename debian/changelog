@@ -8,9 +8,9 @@ wiggle (0.6.20100304+git1c5bfa7-1) unstable; urgency=low
     - (02 p.help, 30 dotest): remove. Integrated to upstream.
     - (05 Makefile): Adjust for new upstream.
 
- -- Jari Aalto <jari.aalto@cante.net>  Fri, 05 Mar 2010 09:15:11 +0200
+ -- Jari Aalto <jari.aalto@cante.net>  Fri, 05 Mar 2010 09:36:48 +0200
 
-iggle (0.6-7) unstable; urgency=low
+wiggle (0.6-7) unstable; urgency=low
 
   * New maintainer (Closes: #568575).
     - Move to packaging format "3.0 (quilt)".
