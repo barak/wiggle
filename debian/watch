@@ -1,0 +1,2 @@
+version=3
+http://neil.brown.name/wiggle/ .*wiggle-([\d.]+).tar.gz

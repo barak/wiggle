@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+#export DH_VERBOSE=1
+
+CFLAGS_EXTRA = -Wall -pedantic
+CC	     = gcc
+
+override_dh_installchangelogs:
+	dh_installchangelogs ChangeLog
+
+override_dh_auto_build:
+	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS) $(CFLAGS_EXTRA)"
+
+%:
+	dh $@ --parallel
+
+# End of file

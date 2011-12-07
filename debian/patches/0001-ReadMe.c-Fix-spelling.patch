@@ -1,0 +1,22 @@
+From: Jari Aalto <jari.aalto@cante.net>
+Date: Tue, 11 May 2010 09:09:14 +0300
+Subject: ReadMe.c: Fix spelling
+
+Signed-off-by: Jari Aalto <jari.aalto@cante.net>
+---
+ ReadMe.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/ReadMe.c b/ReadMe.c
+index bb0ad85..5e36967 100644
+--- a/ReadMe.c
++++ b/ReadMe.c
+@@ -152,6 +152,6 @@ char HelpBrowse[] = "\n"
+ "\n"
+ "The 'browse' function provides an interactive mode for browsing a\n"
+ "set of patches.  It allows the application of a patch to each file \n"
+-"to be inspected and allows limited editting to correct mis-application\n"
++"to be inspected and allows limited editing to correct mis-application\n"
+ "of patches where wiggling was required, and where conflicts occurred.\n"
+ "\n";
+-- 

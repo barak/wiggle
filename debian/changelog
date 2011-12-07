@@ -1,0 +1,114 @@
+wiggle (0.8-1) unstable; urgency=low
+
+  * New upstream release
+    - Manual page hyphens (Closes: #574576).
+    - Gcc 4.4 pointer initialization with NULL (Closes: #574577)
+    - Strange bogus conflict (Closes: #271766)
+  * debian/control
+    - (Build-Depends): Add libncurses5-dev.
+  * debian/patches
+    - Remove those integrated to upstream.
+    - (10): Fix spelling.
+    - (20): Fix include.
+  * debian/watch
+    - Add URL.
+  * debian/rules
+    - Simplify even further.
+    - (binary-arch): delete.
+    - (override_dh_installchangelogs): add.
+
+ -- Jari Aalto <jari.aalto@cante.net>  Tue, 11 May 2010 09:43:43 +0300
+
+wiggle (0.6.20100304+git1c5bfa7-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/control
+    - (Vcs-*): new fields.
+    - (Section): Change from utils to vcs (used by the FTP masters).
+  * debian/patches
+    - (02 p.help, 30 dotest): remove. Integrated to upstream.
+    - (05 Makefile): Adjust for new upstream.
+
+ -- Jari Aalto <jari.aalto@cante.net>  Fri, 05 Mar 2010 09:36:48 +0200
+
+wiggle (0.6-7) unstable; urgency=low
+
+  * New maintainer (Closes: #568575).
+    - Move to packaging format "3.0 (quilt)".
+  * debian/control
+    - (Build-Depends): update to debhelper 7.1.
+    - (Depends): add ${misc:Depends}.
+    - (Standards-Version): Update to 3.8.4.
+  * debian/copyright
+    - Update layout.
+    - Update download URL (Closes: #515124).
+  * debian/dirs
+    - Deleted. Not needed.
+  * debian/patches
+    - Convert inline changes to patches.
+  * debian/README.Debian
+    - Correct 'perl script' to just script (actually Bourne shell).
+    - Remove indication to patches, not relevant for the end-user.
+  * debian/rules
+    - Update to dh(1).
+    - (CFLAGS): Change -Werror to -Wall -pedantic
+      (gcc-4.5 FTBFS; Closes: #565074).
+  * debian/source/format
+    - New file.
+  * debian/wiggle.docs
+    - New file.
+  * debian/wiggle.install
+    - New file.
+
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 04 Mar 2010 18:08:16 +0200
+
+wiggle (0.6-6) unstable; urgency=low
+
+  * Take sole ownership of the package, Nicolas is unresponsive
+  * Add Homepage field to control header
+  * Change to dh compat level 5
+  * Do not ignore errors in make clean
+  * Update Standards-Version to 3.7.3, no changes needed
+  * Update the FSF address in the debian/copyright file
+  * Switch to use the git upstream
+
+ -- Baruch Even <baruch@debian.org>  Sat, 29 Dec 2007 21:22:49 +0200
+
+wiggle (0.6-5) unstable; urgency=low
+
+  * Adopt this package (closes: #233661)
+  * Modify build to use dpatch
+  * New Standard: 3.6.1.1
+      - No need to change
+  * Add upstream fixes 004ExtractFix 005Pchanges (006NoDebug is already
+    applied)
+  * Add the notes files to the documentation
+
+ -- Nicolas Thomas <nthomas@free.fr>  Sat,  4 Dec 2004 22:42:17 +0100
+
+wiggle (0.6-4) unstable; urgency=low
+
+  * Orphan this package
+
+ -- Igor Genibel <igenibel@debian.org>  Thu, 19 Feb 2004 11:07:37 +0100
+
+wiggle (0.6-3) unstable; urgency=low
+
+  * Fix upstream bug (Thanks Jan Hudec <bulb@ucw.cz>)
+      - upstream provided a patch
+  * New Standard: 3.6.0
+      - No need to change
+
+ -- Igor Genibel <igenibel@debian.org>  Sat, 12 Jul 2003 10:39:15 +0200
+
+wiggle (0.6-2) unstable; urgency=low
+
+  * Add new build dependency to groff (Closes: #197994)
+
+ -- Igor Genibel <igenibel@debian.org>  Thu, 19 Jun 2003 09:31:14 +0200
+
+wiggle (0.6-1) unstable; urgency=low
+
+  * Initial Release. (Closes: #196862)
+
+ -- Igor Genibel <igenibel@debian.org>  Tue, 10 Jun 2003 12:24:49 +0200

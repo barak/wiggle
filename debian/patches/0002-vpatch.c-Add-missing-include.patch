@@ -1,0 +1,22 @@
+From: Jari Aalto <jari.aalto@cante.net>
+Date: Tue, 11 May 2010 09:33:02 +0300
+Subject: vpatch.c: Add missing include
+
+Signed-off-by: Jari Aalto <jari.aalto@cante.net>
+---
+ vpatch.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/vpatch.c b/vpatch.c
+index 5f76ee8..bffecce 100644
+--- a/vpatch.c
++++ b/vpatch.c
+@@ -53,6 +53,7 @@
+ #include <stdlib.h>
+ #include <signal.h>
+ #include <fcntl.h>
++#include <curses.h>
+ 
+ #define assert(x) do { if (!(x)) abort(); } while (0)
+ 
+-- 

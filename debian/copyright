@@ -1,0 +1,40 @@
+This package was debianized by:
+
+    Igor Genibel <igenibel@debian.org>
+    on 2003-06-10 12:24:49+02 Tue.
+
+It was downloaded from:
+
+    git://neil.brown.name/wiggle
+    http://neil.brown.name/git?p=wiggle;a=summary
+
+Upstream Author:
+
+    Neil Brown <neilb@suse.de> http://neil.brown.name
+
+License:
+
+    This package is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This package is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <http://www.gnu.org/licenses/>
+
+The Debian packaging is licensed under the GPL version 2 of the
+License, or (at your option) any later version, and is:
+
+    Copyright (C) 2010          Jari Aalto <jari.aalto@cante.net>
+    Copyright (C) 2007          Baruch Even <baruch@debian.org>
+    Copyright (C) 2004		Nicolas Thomas <nthomas@free.fr>
+    Copyright (C) 2003          Igor Genibel <igenibel@debian.org>
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in "/usr/share/common-licenses/GPL-2".
+

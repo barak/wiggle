@@ -1,0 +1,9 @@
+wiggle for Debian
+-----------------
+
+The package also provides a script developed by Neil Brown that
+is useful for manipulating patches. See files in:
+
+   /usr/share/doc/wiggle/contrib
+
+ -- Jari Aalto <jari.aalto@cante.net>, Thu,  4 Mar 2010 01:15:20 +0200
