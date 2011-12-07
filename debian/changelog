@@ -1,3 +1,24 @@
+wiggle (0.8-1) unstable; urgency=low
+
+  * New upstream release
+    - Manual page hyphens (Closes: #574576).
+    - Gcc 4.4 pointer initialization with NULL (Closes: #574577)
+    - Strange bogus conflict (Closes: #271766)
+  * debian/control
+    - (Build-Depends): Add libncurses5-dev.
+  * debian/patches
+    - Remove those integrated to upstream.
+    - (10): Fix spelling.
+    - (20): Fix include.
+  * debian/watch
+    - Add URL.
+  * debian/rules
+    - Simplify even further.
+    - (binary-arch): delete.
+    - (override_dh_installchangelogs): add.
+
+ -- Jari Aalto <jari.aalto@cante.net>  Tue, 11 May 2010 09:43:43 +0300
+
 wiggle (0.6.20100304+git1c5bfa7-1) unstable; urgency=low
 
   * New upstream release.

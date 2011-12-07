@@ -2,6 +2,7 @@
  * wiggle - apply rejected patches
  *
  * Copyright (C) 2003 Neil Brown <neilb@cse.unsw.edu.au>
+ * Copyright (C) 2010 Neil Brown <neilb@suse.de>
  *
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -19,12 +20,7 @@
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *    Author: Neil Brown
- *    Email: <neilb@cse.unsw.edu.au>
- *    Paper: Neil Brown
- *           School of Computer Science and Engineering
- *           The University of New South Wales
- *           Sydney, 2052
- *           Australia
+ *    Email: <neilb@suse.de>
  */
 
 /*
@@ -33,10 +29,14 @@
 
 #include "wiggle.h"
 
-char Version[] = "wiggle - v0.6 - 20 May 2003\n";
+char Version[] = "wiggle - v0.8 - 24 March 2010\n";
 
-char short_options[]="xdmwlrh123pVRvq";
+char short_options1[]="xdmwlrhi123pVRvqB"; /* not mode B */
+char short_options2[]="xdmwlrhi123p:VRvqB"; /* mode B */
+
+
 struct option long_options[] = {
+	{"browse",	0, 0, 'B'},
 	{"extract",	0, 0, 'x'},
 	{"diff",	0, 0, 'd'},
 	{"merge",	0, 0, 'm'},
@@ -49,17 +49,19 @@ struct option long_options[] = {
 	{"reverse",	0, 0, 'R'},
 	{"verbose",	0, 0, 'v'},
 	{"quiet",	0, 0, 'q'},
+	{"strip",	1, 0, 'p'},
+	{"no-ignore",	0, 0, 'i'},
 	{0, 0, 0, 0}
 };
 
 char Usage[] =
-"Usage: wiggle --diff|--extract|--merge --lines|--words [--replace] files...\n";
+"Usage: wiggle --diff|--extract|--merge|--browse --lines|--words [--replace] files...\n";
 
 char Help[] =  "\n"
 "Wiggle - apply patches that 'patch' rejects.\n"
 "\n"
 "Wiggle provides three distinct but related functions:\n"
-"merge, diff, and extract.\n"
+"merge, diff, extract, and browse.\n"
 "To get more detailed help on a function, select the function\n"
 "before requesting help.  e.g.\n"
 "    wiggle --diff --help\n"
@@ -68,6 +70,7 @@ char Help[] =  "\n"
 "   --extract   -x    : select 'extract' function.\n"
 "   --diff      -d    : select 'diff' function.\n"
 "   --merge     -m    : select 'merge' function (default).\n"
+"   --browse    -B    : select 'browse' function.\n"
 "\n"
 "   --words     -w    : word-wise diff and merge.\n"
 "   --lines     -l    : line-wise diff and merge.\n"
@@ -82,6 +85,8 @@ char Help[] =  "\n"
 "   --quiet     -q    : don't print un-necessary messages.\n"
 "\n"
 "   --replace   -r    : replace first file with result of merger.\n"
+"\n"
+"   --strip=    -p    : number of path components to strip from file names.\n"
 "\n"
 "Wiggle needs to be given 1, 2, or 3 files.  Any one of these can\n"
 "be given as '-' to signify standard input.\n"
@@ -140,4 +145,13 @@ char HelpMerge[] = "\n"
 "If --merge is given three files, they are each treated as whole files\n"
 "and differences between the second and third are merged into the first.\n"
 "This usage is much like 'merge'.\n"
+"\n";
+
+char HelpBrowse[] = "\n"
+"wiggle --browse [-R] [--strip=n] multi-file-patch\n"
+"\n"
+"The 'browse' function provides an interactive mode for browsing a\n"
+"set of patches.  It allows the application of a patch to each file \n"
+"to be inspected and allows limited editting to correct mis-application\n"
+"of patches where wiggling was required, and where conflicts occurred.\n"
 "\n";

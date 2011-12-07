@@ -1,3 +1,2 @@
-05-Makefile.patch
-10-wiggle.1.patch
-41-extract.c-null.patch
+10-ReadMe.c-spelling.patch
+20-vpatch.c--include.patch

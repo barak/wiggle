@@ -2,6 +2,7 @@
  * wiggle - apply rejected patches
  *
  * Copyright (C) 2003 Neil Brown <neilb@cse.unsw.edu.au>
+ * Copyright (C) 2010 Neil Brown <neilb@suse.de>
  *
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -19,12 +20,7 @@
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *    Author: Neil Brown
- *    Email: <neilb@cse.unsw.edu.au>
- *    Paper: Neil Brown
- *           School of Computer Science and Engineering
- *           The University of New South Wales
- *           Sydney, 2052
- *           Australia
+ *    Email: <neilb@suse.de>
  */
 
 /*
@@ -67,6 +63,7 @@ int split_patch(struct stream f, struct stream *f1, struct stream *f2)
 	int acnt=0, bcnt=0;
 	int a,b,c,d;
 	int lineno = 0;
+	char before[100], after[100];
 
 	f1->body = f2->body = NULL;
 
@@ -89,10 +86,25 @@ int split_patch(struct stream f, struct stream *f1, struct stream *f2)
 		lineno++;
 		switch(state) {
 		case 0:
-			if (sscanf(cp, "@@ -%d,%d +%d,%d @@", &a, &b, &c, &d)==4) {
-				acnt = b;
-				bcnt = d;
-				state = 3;
+			if (sscanf(cp, "@@ -%s +%s @@", before, after)==2) {
+				int ok = 1;
+				if (sscanf(before, "%d,%d", &a, &b) == 2)
+					acnt = b;
+				else if (sscanf(before, "%d", &a) == 1)
+					acnt = 1;
+				else
+					ok = 0;
+
+				if (sscanf(after, "%d,%d", &c, &d) == 2)
+					bcnt = d;
+				else if (sscanf(after, "%d", &c) == 1)
+					bcnt = 1;
+				else
+					ok = 0;
+				if (ok)
+					state = 3;
+				else
+					state = 0;
 			} else if (sscanf(cp, "*** %d,%d ****", &a, &b)==2) {
 				acnt = b-a+1;
 				state = 1;
@@ -184,7 +196,8 @@ int split_merge(struct stream f, struct stream *f1, struct stream *f2, struct st
 	int state = 0;
 	char *cp, *end;
 	struct stream r1,r2,r3;
-	f1->body = f2->body = f2->body = NULL;
+	f1->body = NULL;
+	f2->body = NULL;
 
 	r1.body = malloc(f.len);
 	r2.body = malloc(f.len);
@@ -202,6 +215,8 @@ int split_merge(struct stream f, struct stream *f1, struct stream *f2, struct st
 		 *  1 in file 1 of conflict
 		 *  2 in file 2 of conflict
 		 *  3 in file 3 of conflict
+		 *  4 in file 2 but expecting 1/3 next
+		 *  5 in file 1/3
 		 */
 		int len = end-cp;
 		lineno++;
@@ -211,8 +226,35 @@ int split_merge(struct stream f, struct stream *f1, struct stream *f2, struct st
 			    strncmp(cp, "<<<<<<<", 7)==0 &&
 			    (cp[7] == ' ' || cp[7] == '\n')
 				) {
+				char *peek;
 				state = 1;
 				skip_eol(&cp, end);
+				/* diff3 will do something a bit strange in
+				 * the 1st and 3rd sections are the same.
+				 * it reports
+				 * <<<<<<<
+				 * 2nd
+				 * =======
+				 * 1st and 3rd
+				 * >>>>>>>
+				 * Without a ||||||| at all.
+				 * so to know if we are in '1' or '2', skip forward
+				 * having a peek.
+				 */
+				peek = cp;
+				while (peek < end) {
+					if (end-peek >= 8 &&
+					    (peek[7] == ' ' || peek[7] == '\n')) {
+						if (strncmp(peek, "|||||||", 7) == 0 ||
+						    strncmp(peek, ">>>>>>>", 7) == 0)
+							break;
+						else if (strncmp(peek, "=======", 7) == 0) {
+							state = 4;
+							break;
+						}
+					}
+					skip_eol(&peek, end);
+				}
 			} else {
 				char *cp2= cp;
 				copyline(&r1, &cp2, end);
@@ -250,6 +292,29 @@ int split_merge(struct stream f, struct stream *f1, struct stream *f2, struct st
 				skip_eol(&cp, end);
 			} else
 				copyline(&r3, &cp, end);
+			break;
+		case 4:
+			if (len>=8 &&
+			    strncmp(cp, "=======", 7)==0 &&
+			    (cp[7] == ' ' || cp[7] == '\n')
+				) {
+				state = 5;
+				skip_eol(&cp, end);
+			} else
+				copyline(&r2, &cp, end);
+			break;
+		case 5:
+			if (len>=8 &&
+			    strncmp(cp, ">>>>>>>", 7)==0 &&
+			    (cp[7] == ' ' || cp[7] == '\n')
+				) {
+				state = 0;
+				skip_eol(&cp, end);
+			} else {
+				char *t = cp;
+				copyline(&r1, &t, end);
+				copyline(&r3, &cp, end);
+			}
 			break;
 		}
 	}

@@ -1,2 +1,2 @@
 version=3
-# 2010-03-04 No upstream URL
+http://neil.brown.name/wiggle/ .*wiggle-([\d.]+).tar.gz
