@@ -1,0 +1,46 @@
+Status: ok
+
+Move to start or end of line.
+
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./TODO     |    2 +-
+ ./vpatch.c |   11 +++++++++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff ./TODO~current~ ./TODO
+--- ./TODO~current~	2006-06-03 20:38:19.000000000 +1000
++++ ./TODO	2006-06-03 20:43:00.000000000 +1000
+@@ -184,7 +184,7 @@ DONE - blank after end and before begini
+         next/prev conflict
+         incr-search
+      DONE   page up/down
+-        beginning/end of line
++     DONE   beginning/end of line
+         left-right to handle line breaks.
+  - handle single .rej file
+  - allow updates to be saved
+
+diff ./vpatch.c~current~ ./vpatch.c
+--- ./vpatch.c~current~	2006-06-03 20:36:10.000000000 +1000
++++ ./vpatch.c	2006-06-03 20:41:02.000000000 +1000
+@@ -1594,6 +1594,17 @@ void merge_window(struct plist *p, FILE 
+ 			target = col + 1;
+ 			break;
+ 
++		case '^':
++		case 'A'-64:
++			/* Start of line */
++			target = 0;
++			break;
++		case '$':
++		case 'E'-64:
++			/* End of line */
++			target = 1000;
++			break;
++
+ 		case 'a': /* 'after' view in patch window */
+ 			if (mode & AFTER)
+ 				mode &= ~BEFORE;

@@ -1,0 +1,466 @@
+Status: ok
+
+New merge stuff
+
+
+Signed-off-by: Neil Brown <neilb@cse.unsw.edu.au>
+
+### Diffstat output
+ ./merge2.c |  356 ++++++++++++++++++++++++++++++++-----------------------------
+ 1 files changed, 187 insertions(+), 169 deletions(-)
+
+diff ./merge2.c~current~ ./merge2.c
+--- ./merge2.c~current~	2005-03-08 08:57:00.000000000 +1100
++++ ./merge2.c	2005-03-08 12:35:57.000000000 +1100
+@@ -83,6 +83,101 @@ int check_alreadyapplied(struct file af,
+ 	return 1;
+ }
+ 
++inline int isolate_conflicts(struct file af, struct file bf, struct file cf,
++			      struct csl *csl1, struct csl *csl2, int words,
++			      struct merge *m)
++{
++	/* A conflict indicates that something is definitely wrong
++	 * and so we need to be a bit suspicious of nearby apparent matches.
++	 * To display a conflict effectively we expands it's effect to 
++	 * include any Extraneous, Unmatched or Changed text.
++	 * Also, unless 'words', we need to include any partial lines
++	 * in the Unchanged text that forms the border of a conflict.
++	 *
++	 */
++	int i,j,k;
++	int cnt = 0;
++
++	for (i=0; m[i].type != End; i++) 
++		if (m[i].type == Conflict) {
++			/* We have a conflict here.
++			 * First search backwards for an Unchanged marking
++			 * things as in_conflict.  Then find the 
++			 * cut-point in the Unchanged.  If there isn't one, 
++			 * keep looking. 
++			 *
++			 * Then search forward doing the same thing.
++			 */
++			cnt++;
++			m[i].in_conflict = 1;
++			j = i;
++			while (--j >= 0) {
++				if (!m[j].in_conflict) {
++					m[j].in_conflict = 1;
++					m[j].lo = 0;
++				}
++				if (m[j].type == Unchanged) {
++					if (words) {
++						m[j].hi = m[j].al;
++						break;
++					}
++					/* need to find the last line-break, which
++					 * might be after the last newline, if there
++					 * is one, or might be at the start
++					 */
++					for (k=m[j].al; k>0; k--) 
++						if (ends_line(af.list[m[j].a+k-1]))
++							break;
++					if (k>0) {
++						m[j].hi = k;
++						break;
++					}
++					if ((m[j].a == 0 || ends_line(af.list[m[j].a-1])) &&
++					    (m[j].b == 0 || ends_line(bf.list[m[j].b-1])) &&
++					    (m[j].c == 0 || ends_line(cf.list[m[j].c-1]))){
++						m[j].hi = 0;
++						break;
++					}
++					/* no start-of-line found... */
++					m[j].hi = -1;
++				}
++			}
++			/* now the forward search */
++			for (j=i+1; m[j].type != End; j++) {
++				m[j].in_conflict = 1;
++				if (m[j].type == Unchanged) {
++					m[j].hi = m[j].al;
++					if (words) {
++						m[j].lo = 0;
++						break;
++					}
++					/* need to find a line-break, which might be at
++					 * the very beginning, or might be after the
++					 * first newline - if there is one
++					 */
++					if ((m[j].a == 0 || ends_line(af.list[m[j].a-1])) &&
++					    (m[j].b == 0 || ends_line(bf.list[m[j].b-1])) &&
++					    (m[j].c == 0 || ends_line(cf.list[m[j].c-1]))){
++						m[j].lo = 0;
++						break;
++					}
++					for (k=0; k<m[j].al; k++)
++						if (ends_line(af.list[m[j].a+k]))
++							break;
++					if (k<m[j].al) {
++						m[j].lo = k+1;
++						break;
++					}
++					/* no start-of-line found */
++					m[j].lo = m[j].al+1;
++				}
++			}
++			i = j;
++		}
++	return cnt;
++}
++
++
+ struct ci make_merger(struct file af, struct file bf, struct file cf,
+ 		      struct csl *csl1, struct csl *csl2, int words)
+ {
+@@ -91,10 +186,7 @@ struct ci make_merger(struct file af, st
+ 	struct ci rv;
+ 	int i,l;
+ 	int a,b,c,c1,c2;
+-	struct {int a,b,c,c1,c2;} nl;
+ 	int wiggle_found = 0;
+-	int in_conflict = 0;
+-	int nli = -1;
+ 
+ 	rv.conflicts = rv.wiggles = rv.ignored = 0;
+ 
+@@ -109,7 +201,6 @@ struct ci make_merger(struct file af, st
+ 	if (!rv.merger)
+ 		return rv;
+ 
+-	nl.a=nl.b=nl.c=nl.c1=nl.c2=0;
+ 	a=b=c=c1=c2 = 0;
+ 	i = 0;
+ 	while (1) {
+@@ -117,20 +208,12 @@ struct ci make_merger(struct file af, st
+ 		match1 = (a>=csl1[c1].a && b >= csl1[c1].b); /* c1 doesn't match */
+ 		match2 = (b>=csl2[c2].a && c >= csl2[c2].b);
+ 
+-		if (in_conflict && match1 && match2 &&
+-		    check_alreadyapplied(af,cf,&rv.merger[i])) {
+-			rv.ignored++;
+-			in_conflict = 0;
+-			i++;
+-		}
+-
+-		if (!in_conflict) {
+-			rv.merger[i].a = a;
+-			rv.merger[i].b = b;
+-			rv.merger[i].c = c;
+-			rv.merger[i].c1 = c1;
+-			rv.merger[i].c2 = c2;
+-		}
++		rv.merger[i].a = a;
++		rv.merger[i].b = b;
++		rv.merger[i].c = c;
++		rv.merger[i].c1 = c1;
++		rv.merger[i].c2 = c2;
++		rv.merger[i].in_conflict = 0;
+ 
+ 		if (!match1 && match2) {
+ 			if (a < csl1[c1].a) {
+@@ -151,7 +234,7 @@ struct ci make_merger(struct file af, st
+ 				rv.merger[i].type = Extraneous;
+ 				rv.merger[i].al = 0;
+ 				rv.merger[i].cl = 
+-				rv.merger[i].bl =
++					rv.merger[i].bl =
+ 					min(csl1[c1].b - b,
+ 					    csl2[c2].len - (b-csl2[c2].a));
+ 				newb = b+rv.merger[i].bl;
+@@ -172,152 +255,36 @@ struct ci make_merger(struct file af, st
+ 			 * a suitable cut-point, then we could make a 
+ 			 * triple-cut-point for end of a conflict.
+ 			 */
+-/*			int could_start=0, could_end=0;*/
++
+ 			rv.merger[i].type = Changed;
+ 			rv.merger[i].bl = min(csl1[c1].b+csl1[c1].len, csl2[c2].a) - b;
+ 			rv.merger[i].al = rv.merger[i].bl;
+ 			rv.merger[i].cl = csl2[c2].b - c;
+-#if 0
+-			if (in_conflict)
+-				printf("ding\n");
+-			could_start = (c==0) || words || ends_line(cf.list[c-1]);
+-			could_end = in_conflict &&
+-				(csl2[c2].a <= csl1[c1].b+csl1[c1].len) &&
+-				(csl2[c2].b == 0 ||words ||
+-				 ends_line(cf.list[csl2[c2].b-1]));
+-			if (could_start || could_end) {
+-				int newa = a + rv.merger[i].al;
+-				int j= a+1;
+-				if ( (a==0 || ends_line(af.list[a-1])) &&
+-				     (b==0 || ends_line(bf.list[b-1])))
+-					j = a;
+-				for (; j<=newa; j++)
+-					if (words || j==0|| 
+-					    ends_line(af.list[j-1])) {
+-						if (could_start) {
+-							nl.a = j;
+-							nl.b = j-a+b;
+-							nl.c = c;
+-							nl.c1 = c1;
+-							nl.c2 = c2;
+-						}
+-						if (could_end) {
+-							could_end = 0;
+-							rv.merger[i].al = j - rv.merger[i].a;
+-							rv.merger[i].bl = j-a+b - rv.merger[i].b;
+-							rv.merger[i].cl = c - rv.merger[i].c;
+-							a = rv.merger[i].a;
+-							b = rv.merger[i].b;
+-							c = rv.merger[i].c;
+-							in_conflict = 0;
+-							rv.merger[i].type = Conflict;
+-							if (check_alreadyapplied(af,cf,&rv.merger[i]))
+-								rv.ignored++;
+-						}
+-					}
+-			}
+-#endif
+ 		} else if (match1 && match2) {
+ 			/* Some unchanged text 
+-			 * Keep an eye out for newlines here was they
+-			 * delimit conflicts
+ 			 */
+-			int j, newb;
+ 			rv.merger[i].type = Unchanged;
+ 			rv.merger[i].bl = 
+ 				min(csl1[c1].len - (b-csl1[c1].b),
+ 				    csl2[c2].len - (b-csl2[c2].a));
+ 			rv.merger[i].al = rv.merger[i].cl =
+ 				rv.merger[i].bl;
+-			newb = b + rv.merger[i].bl;
+-			j = b;
+-			if ( (a==0 || words || ends_line(af.list[a-1])) &&
+-			     (b==0 || words || ends_line(bf.list[b-1])) &&
+-			     (c==0 || words || ends_line(cf.list[c-1]))
+-				)
+-			     j--;
+-			for (; j<newb; j++)
+-				if (words || j<0 || ends_line(bf.list[j])){
+-					/* save this location as it may be the start of the next conflict */
+-					nl.b = j+1;
+-					nl.a = j+1-b +a;
+-					nl.c = j+1-b +c;
+-					nl.c1 = c1;
+-					nl.c2 = c2;
+-					nli = i;
+-					if (in_conflict) {
+-						/* We can drop out of the current conflict
+-						 * just after this word, or before if 
+-						 * words, or all previous end in newline
+-						 */
+-						rv.merger[i].al = nl.a - rv.merger[i].a;
+-						rv.merger[i].bl = nl.b - rv.merger[i].b;
+-						rv.merger[i].cl = nl.c - rv.merger[i].c;
+-#if 0
+-						if (words ||
+-						    (ends_line(af.list[nl.a-2]) &&
+-						     ends_line(bf.list[nl.b-2]) &&
+-						     ends_line(cf.list[nl.c-2])
+-						    )) {
+-							rv.merger[i].al --;
+-							rv.merger[i].bl --;
+-							rv.merger[i].cl --;
+-						}
+-#endif
+-						a = rv.merger[i].a;
+-						b = rv.merger[i].b;
+-						c = rv.merger[i].c;
+-						in_conflict = 0;
+-						rv.merger[i].type = Conflict;
+-						if (check_alreadyapplied(af,cf,&rv.merger[i]))
+-							rv.ignored++;
+-					}
+-				}
+ 		} else {
+ 			/* must be a conflict. 
+ 			 * Move a and c to next match, and b to closest of the two
+-			 * Also record previous newline as start of conflict
+ 			 */
+-			if (!in_conflict) {
+-				i = nli;
+-				if (i>=0) {
+-					/* need to truncate a previous match */
+-					assert(rv.merger[i].type == Unchanged
+-					       || rv.merger[i].type >= Conflict);
+-					rv.merger[i].al = nl.a - rv.merger[i].a;
+-					rv.merger[i].bl = nl.b - rv.merger[i].b;
+-					rv.merger[i].cl = nl.c - rv.merger[i].c;
+-				}
+-				i++;
+-				rv.merger[i].a = nl.a;
+-				rv.merger[i].b = nl.b;
+-				rv.merger[i].c = nl.c;
+-				rv.merger[i].c1 = nl.c1;
+-				rv.merger[i].c2 = nl.c2;
+-				in_conflict++;
+-				rv.merger[i].type = Conflict;
+-			}
+-			if (match1) {
+-				rv.merger[i].al = csl1[c1].a + csl1[c1].len - a;
+-				rv.merger[i].bl = csl1[c1].b + csl1[c1].len - b;
+-				rv.merger[i].cl = 0;
+-			} else {
+-				rv.merger[i].al = csl1[c1].a - a;
+-				rv.merger[i].cl = csl2[c2].b - c;
+-				rv.merger[i].bl = min(csl1[c1].b, csl2[c2].a) - b;
+-			}
+-#if 0
+-			if (check_alreadyapplied(af,cf,&rv.merger[i])) {
+-				rv.ignored++;
+-				in_conflict = 0;
+-			}
+-#endif
++			rv.merger[i].type = Conflict;
++			rv.merger[i].al = csl1[c1].a - a;
++			rv.merger[i].cl = csl2[c2].b - c;
++			rv.merger[i].bl = min(csl1[c1].b, csl2[c2].a) - b;
++			if (check_alreadyapplied(af,cf,&rv.merger[i]))
++				rv.ignored ++;
+ 		}
+ 		a += rv.merger[i].al;
+ 		b += rv.merger[i].bl;
+ 		c += rv.merger[i].cl;
+-		if (!in_conflict) 
+-			i++;
++		i++;
++
+ 		while (csl1[c1].a + csl1[c1].len <= a && csl1[c1].len) c1++;
+ 		assert(csl1[c1].b + csl1[c1].len >= b);
+ 		while (csl2[c2].b + csl2[c2].len <= c && csl2[c2].len) c2++;
+@@ -327,15 +294,9 @@ struct ci make_merger(struct file af, st
+ 		    b == csl2[c2].a && c == csl2[c2].b)
+ 			break;
+ 	}
+-	if (in_conflict) {
+-		rv.merger[i].al = a - rv.merger[i].a;
+-		rv.merger[i].bl = b - rv.merger[i].b;
+-		rv.merger[i].cl = c - rv.merger[i].c;
+-		rv.merger[i].type = Conflict;
+-		rv.ignored += check_alreadyapplied(af,cf,&rv.merger[i]);
+-		i++;
+-	}
+ 	rv.merger[i].type = End;
++	rv.merger[i].in_conflict = 0;
++	rv.conflicts = isolate_conflicts(af,bf,cf,csl1,csl2,words,rv.merger);
+ 	if (wiggle_found)
+ 		rv.wiggles++;
+ 	return rv;
+@@ -368,8 +329,7 @@ struct ci print_merge2(FILE *out, struct
+ 				v = 0;
+ 		}
+ 		if (v)
+-#endif
+-		printf("[%s: %d-%d,%d-%d,%d-%d]\n",
++		printf("[%s: %d-%d,%d-%d,%d-%d%s(%d,%d)]\n",
+ 		       m->type==Unmatched?"Unmatched":
+ 		       m->type==Unchanged?"Unchanged":
+ 		       m->type==Extraneous?"Extraneous":
+@@ -378,11 +338,82 @@ struct ci print_merge2(FILE *out, struct
+ 		       m->type==Conflict?"Conflict":"unknown",
+ 		       m->a, m->a+m->al-1,
+ 		       m->b, m->b+m->bl-1,
+-		       m->c, m->c+m->cl-1);
++		       m->c, m->c+m->cl-1, m->in_conflict?" in_conflict":"",
++		       m->lo, m->hi);
++#endif
++		while (m->in_conflict) {
++			/* need to print from 'hi' to 'lo' of next
++			 * Unchanged which is < it's hi
++			 */
++			int st = m->hi;
++
++			printrange(out, a, m->a+m->lo, m->hi - m->lo);
++
++#if 1
++		if (v)
++			for (cm=m; cm->in_conflict; cm++) {
++				printf("{%s: %d-%d,%d-%d,%d-%d%s(%d,%d)}\n",
++				       cm->type==Unmatched?"Unmatched":
++				       cm->type==Unchanged?"Unchanged":
++				       cm->type==Extraneous?"Extraneous":
++				       cm->type==Changed?"Changed":
++				       cm->type==AlreadyApplied?"AlreadyApplied":
++				       cm->type==Conflict?"Conflict":"unknown",
++				       cm->a, cm->a+cm->al-1,
++				       cm->b, cm->b+cm->bl-1,
++				       cm->c, cm->c+cm->cl-1, cm->in_conflict?" in_conflict":"",
++				       cm->lo, cm->hi);
++				if (cm->type == Unchanged && cm != m && cm->lo < cm->hi)
++					break;
++			}
++#endif
++
++			fputs(words?"<<<---":"<<<<<<<\n", out);
++			for (cm=m; cm->in_conflict; cm++) {
++				if (cm->type == Unchanged && cm != m && cm->lo < cm->hi) {
++					printrange(out, a, cm->a, cm->lo);
++					break;
++				}
++				printrange(out, a, cm->a+st, cm->al-st);
++				st = 0;
++			}
++			fputs(words?"|||":"|||||||\n", out);
++			st = m->hi;
++			for (cm=m; cm->in_conflict; cm++) {
++				if (cm->type == Unchanged && cm != m && cm->lo < cm->hi) {
++					printrange(out, b, cm->b, cm->lo);
++					break;
++				}
++				printrange(out, b, cm->b+st, cm->bl-st);
++				st = 0;
++			}
++			fputs(words?"===":"=======\n", out);
++			st = m->hi;
++			for (cm=m; cm->in_conflict; cm++) {
++				if (cm->type == Unchanged && cm != m && cm->lo < cm->hi) {
++					printrange(out, c, cm->c, cm->lo);
++					break;
++				}
++				printrange(out, c, cm->c+st, cm->cl-st);
++				st = 0;
++			}
++			fputs(words?"--->>>":">>>>>>>\n", out);
++			m = cm;
++			if (m->in_conflict && m->hi >= m->al) {
++				printrange(out, a, m->a+m->lo, m->hi-m->lo);
++				m++;
++			}
++		}
++
++		/* there is always some non-conflict after a conflict,
++		 * unless we hit the end
++		 */
++		if (m->type == End)
++			break;
+ 		switch(m->type) {
++		case Unchanged:
+ 		case AlreadyApplied:
+ 		case Unmatched:
+-		case Unchanged:
+ 			printrange(out, a, m->a, m->al);
+ 			break;
+ 		case Extraneous:
+@@ -391,19 +422,6 @@ struct ci print_merge2(FILE *out, struct
+ 			printrange(out, c, m->c, m->cl);
+ 			break;
+ 		case Conflict:
+-			/* Multiple consecutive conflicts are merged */
+-			fputs(words?"<<<---":"<<<<<<<\n", out);
+-			for (cm=m; cm->type == Conflict; cm++)
+-				printrange(out, a, cm->a, cm->al);
+-			fputs(words?"|||":"|||||||\n", out);
+-			for (cm=m; cm->type == Conflict; cm++)
+-				printrange(out, b, cm->b, cm->bl);
+-			fputs(words?"===":"=======\n", out);
+-			for (cm=m; cm->type == Conflict; cm++)
+-				printrange(out, c, cm->c, cm->cl);
+-			fputs(words?"--->>>":">>>>>>>\n", out);
+-			m = cm-1;
+-			break;
+ 		case End: assert(0);
+ 		}
+ 	}

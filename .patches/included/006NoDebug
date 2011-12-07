@@ -1,0 +1,30 @@
+Status: ok
+
+Remove debugging
+
+
+ ----------- Diffstat output ------------
+ ./merge.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff ./merge.c~current~ ./merge.c
+--- ./merge.c~current~	2004-02-03 13:18:47.000000000 +1100
++++ ./merge.c	2004-02-03 13:20:45.000000000 +1100
+@@ -822,7 +822,7 @@ struct ci print_merge(FILE *out, struct 
+ 	struct ci rv;
+ 	rv.ignored = rv.conflicts = 0;
+ 
+-#if 1
++#if 0
+ 	{ int i;
+ 	for (i=0; c1[i].len; i++) printf("%2d c1 %d:%d %d\n", i, c1[i].a,c1[i].b,c1[i].len);
+ 	printf("%2d c1 %d:%d END\n", i, c1[i].a,c1[i].b);
+@@ -848,7 +848,7 @@ struct ci print_merge(FILE *out, struct 
+ 			rv.ignored++;
+ 			next_conflict(end_next, c1,c2,&start_next,&end_next,a,b,c);
+ 		}
+-#if 1
++#if 0
+ 		printf("start %d %d (%d,%d)  end %d %d (%d,%d)\n",
+ 		       start_next.in_a, start_next.pos, start_next.c1, start_next.c2,
+ 		       end_next.in_a, end_next.pos, end_next.c1, end_next.c2);

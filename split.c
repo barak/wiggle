@@ -19,12 +19,7 @@
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *    Author: Neil Brown
- *    Email: <neilb@cse.unsw.edu.au>
- *    Paper: Neil Brown
- *           School of Computer Science and Engineering
- *           The University of New South Wales
- *           Sydney, 2052
- *           Australia
+ *    Email: <neilb@suse.de>
  */
 
 /*
@@ -39,7 +34,7 @@
  *    or single char.
  *
  * A line is any string that ends with \n
- * 
+ *
  * As a special case to allow proper aligning of multiple chunks
  * in a patch, a word starting \0 will include 5 chars and a newline
  *

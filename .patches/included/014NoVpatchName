@@ -1,0 +1,53 @@
+Status: ok
+
+Remove support for the name 'vpatch'
+
+Apparently it is otherwise used:
+   http://www.tibed.net/index.php?page=vpatch
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./ReadMe.c |    3 +--
+ ./wiggle.c |    4 +++-
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff ./ReadMe.c~current~ ./ReadMe.c
+--- ./ReadMe.c~current~	2006-05-25 21:08:22.000000000 +1000
++++ ./ReadMe.c	2006-05-25 21:06:03.000000000 +1000
+@@ -73,7 +73,7 @@ char Help[] =  "\n"
+ "   --extract   -x    : select 'extract' function.\n"
+ "   --diff      -d    : select 'diff' function.\n"
+ "   --merge     -m    : select 'merge' function (default).\n"
+-"   --browse    -B    : select 'browse' function - default if program is 'vpatch'.\n"
++"   --browse    -B    : select 'browse' function.\n"
+ "\n"
+ "   --words     -w    : word-wise diff and merge.\n"
+ "   --lines     -l    : line-wise diff and merge.\n"
+@@ -152,7 +152,6 @@ char HelpMerge[] = "\n"
+ 
+ char HelpBrowse[] = "\n"
+ "wiggle --browse [-R] [--strip=n] multi-file-patch\n"
+-"vpatch  [-R] [--strip=n] multi-file-patch\n"
+ "\n"
+ "The 'browse' function provides an interactive mode for browsing a\n"
+ "set of patches.  It allows the application of a patch to each file \n"
+
+diff ./wiggle.c~current~ ./wiggle.c
+--- ./wiggle.c~current~	2006-05-25 21:08:22.000000000 +1000
++++ ./wiggle.c	2006-05-25 21:05:41.000000000 +1000
+@@ -167,11 +167,13 @@ int main(int argc, char *argv[])
+ 
+ 	base0 = strrchr(argv[0], '/');
+ 	if (base0) base0++; else base0=argv[0];
++#if 0
++	/* The name 'vpatch' seems to be used elsewhere */
+ 	if (strcmp(base0, "vpatch")==0) {
+ 		Cmd = base0;
+ 		mode = 'B';
+ 	}
+-
++#endif
+ 	while ((opt = getopt_long(argc, argv,
+ 				  short_options(mode), long_options,
+ 				  &option_index)) != -1)

@@ -1,0 +1,33 @@
+Status: ok
+
+Fix a couple of little bugs that crept in to p
+
+
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./p |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff .prev/p ./p
+--- .prev/p	2006-06-13 22:59:26.000000000 +1000
++++ ./p	2006-06-13 22:57:31.000000000 +1000
+@@ -800,7 +800,7 @@ case $cmd in
+ 	> .patches/files
+ 	;;
+   openall )
+-        while p open last && p discard ; do : ; done
++        while $0 open last && $0 discard ; do : ; done
+ 	;;
+   recommit )
+ 	make_diff
+@@ -906,7 +906,7 @@ case $cmd in
+   export )
+ 	# there must be only one patch.  We
+ 	# git commit, p commit, p rebase
+-	if [ -n `ls .patches/applied` ]
++	if [ -n "`ls .patches/applied`" ]
+ 	then
+ 	    echo 'Cannot export when there are applied patches'
+ 	    exit 1;

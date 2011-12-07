@@ -1,0 +1,53 @@
+Status: ok
+
+Blank screen after end of file and before beginning.
+
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./TODO     |    5 +++--
+ ./vpatch.c |    4 ++++
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff ./TODO~current~ ./TODO
+--- ./TODO~current~	2006-06-03 11:28:36.000000000 +1000
++++ ./TODO	2006-06-03 11:35:37.000000000 +1000
+@@ -176,7 +176,7 @@ DONE - at same time, lines with no diff 
+  - put line/col number is status bar
+  - allow cursor to move left/right an scroll-on-demand.
+  - If we have selected 'before', then don't show 'after' lines..
+- - blank after end and before begining
++DONE - blank after end and before begining
+  - better movement:
+         top
+         bottom
+@@ -187,4 +187,5 @@ DONE - at same time, lines with no diff 
+  - handle single .rej file
+  - allow updates to be saved
+  - allow editing???
+-
++ - better colours?
++ - why is there a leading blank line?
+
+diff ./vpatch.c~current~ ./vpatch.c
+--- ./vpatch.c~current~	2006-06-03 00:29:49.000000000 +1000
++++ ./vpatch.c	2006-06-03 11:34:15.000000000 +1000
+@@ -1394,6 +1394,8 @@ void merge_window(struct plist *p, FILE 
+ 				else if ((tpos.side == 0 || tpos.side == -1) && (mode2 & (ORIG|BEFORE)))
+ 					draw_mline(i--,tpos,fm,fb,fa,ci.merger,start,cols, mode2&(ORIG|BEFORE|CHANGED|CHANGES));
+ 			}
++			while (i >= 1)
++				blank(i--, 0, cols, a_void);
+ 			tpos = pos; tpos2.p = pos.lo;
+ 			for (i=row; i<rows && ci.merger[tpos.p.m].type != End; ) {
+ 				mode2 = check_line(tpos, fm,fb,fa,ci.merger,mode);
+@@ -1407,6 +1409,8 @@ void merge_window(struct plist *p, FILE 
+ 				}
+ 				next_mline(&tpos, fm,fb,fa,ci.merger, mode);
+ 			}
++			while (i<rows)
++				blank(i++, 0, cols, a_void);
+ 		}
+ 		move(row,0);
+ 		c = getch();

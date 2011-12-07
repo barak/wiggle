@@ -19,12 +19,7 @@
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *    Author: Neil Brown
- *    Email: <neilb@cse.unsw.edu.au>
- *    Paper: Neil Brown
- *           School of Computer Science and Engineering
- *           The University of New South Wales
- *           Sydney, 2052
- *           Australia
+ *    Email: <neilb@suse.de>
  */
 
 /*
@@ -60,7 +55,7 @@ struct v {
 
 static int find_common(struct file *a, struct file *b,
 		       int *alop, int *ahip,
-		       int *blop, int *bhip, 
+		       int *blop, int *bhip,
 		       int mid,
 		       struct v *v)
 {
@@ -73,7 +68,7 @@ static int find_common(struct file *a, struct file *b,
 	 * v is scratch space each is indexable from
 	 * alo-bhi to ahi-blo inclusive
 	 */
-		
+
 	int klo, khi;
 	int k;
 	int alo = *alop;
@@ -108,7 +103,7 @@ static int find_common(struct file *a, struct file *b,
 			vnew.l += snake;
 			dist = (ahi-x)+(bhi-y);
 			if (dist < best) best = dist;
-			if (x+y >= mid && 
+			if (x+y >= mid &&
 			    v[k].x+v[k].x-k <= mid) {
 				vnew.md = k;
 			}
@@ -165,7 +160,7 @@ static int find_common(struct file *a, struct file *b,
 			v[khi+1] = v[khi];
 			v[khi+1].x++;
 			khi ++;
-		} else 
+		} else
 			while (dist > best) {
 				khi --;
 				x = v[khi].x+1; y = x - (khi+1);
@@ -187,7 +182,7 @@ static struct csl *lcsl(struct file *a, int alo, int ahi,
 	struct csl *rv = NULL;
 	int k;
 
-	if (ahi <= alo || bhi <= blo) 
+	if (ahi <= alo || bhi <= blo)
 		return csl;
 
 
@@ -205,7 +200,7 @@ static struct csl *lcsl(struct file *a, int alo, int ahi,
 		csl->len = 0;
 	}
 	if (len) {
-		csl = lcsl(a,alo,alo1,	
+		csl = lcsl(a,alo,alo1,
 			   b,blo,blo1,
 			   csl, v);
 
@@ -243,45 +238,58 @@ static struct csl *lcsl(struct file *a, int alo, int ahi,
 		return csl;
 }
 
-/* if two common sequences are separated by only an add or remove,
+/* If two common sequences are separated by only an add or remove,
  * and the first common ends the same as the middle text,
- * extend the second and contract the first in the hope that the 
+ * extend the second and contract the first in the hope that the
  * first might become empty.  This ameliorates against the greedyness
  * of the 'diff' algorithm.
+ * We treat the final zero-length 'csl' as a common sequence which
+ * can be extended so we much make sure to add a new zero-length csl
+ * to the end.
  * Once this is done, repeat the process but extend the first
- * in favour of the second.  The acknowledges that semantic units
- * more often end with common text ("return 0;\n}\n", "\n") than
- * start with it.
+ * in favour of the second but only up to the last newline.  This
+ * acknowledges that semantic units more often end with common
+ * text ("return 0;\n}\n", "\n") than start with it.
  */
 static void fixup(struct file *a, struct file *b, struct csl *list)
 {
 	struct csl *list1, *orig;
 	int lasteol = -1;
+	int found_end = 0;
 	if (!list) return;
 	orig = list;
 	list1 = list+1;
-	while (list->len && list1->len) {
+	while (list->len) {
+		if (list1->len == 0)
+			found_end = 1;
+
 		if ((list->a+list->len == list1->a &&
+		     list->b+list->len != list1->b &&
 		     /* text at b inserted */
 		     match(&b->list[list->b+list->len-1],
 			   &b->list[list1->b-1])
-			)
+			    )
 		    ||
 		    (list->b+list->len == list1->b &&
+		     list->a+list->len != list1->a &&
 		     /* text at a deleted */
 		     match(&a->list[list->a+list->len-1],
 			   &a->list[list1->a-1])
 			    )
 			) {
-/*			printword(a->list[list1->a-1]);
+#if 0
+			printword(stderr, a->list[list1->a-1]);
 			printf("fixup %d,%d %d : %d,%d %d\n",
 			       list->a,list->b,list->len,
 			       list1->a,list1->b,list1->len);
-*/			if (ends_line(a->list[list->a+list->len-1])
+#endif
+			if (ends_line(a->list[list->a+list->len-1])
 			    && a->list[list->a+list->len-1].len==1
 			    && lasteol == -1
 				) {
-/*				printf("E\n");*/
+#if 0
+				printf("E\n");
+#endif
 				lasteol = list1->a-1;
 			}
 			list1->a--;
@@ -290,7 +298,12 @@ static void fixup(struct file *a, struct file *b, struct csl *list)
 			list->len--;
 			if (list->len == 0) {
 				lasteol = -1;
-				if (list > orig)
+				if (found_end) {
+					*list = *list1;
+					list1->a += list1->len;
+					list1->b += list1->len;
+					list1->len = 0;
+				} else if (list > orig)
 					list--;
 				else {
 					*list = *list1++;
@@ -300,7 +313,8 @@ static void fixup(struct file *a, struct file *b, struct csl *list)
 		} else {
 			if (lasteol >= 0) {
 /*				printf("seek %d\n", lasteol);*/
-				while (list1->a <= lasteol && list1->len>1) {
+				while (list1->a <= lasteol && (list1->len>1 ||
+							       (found_end && list1->len > 0))) {
 					list1->a++;
 					list1->b++;
 					list1->len--;
@@ -308,10 +322,17 @@ static void fixup(struct file *a, struct file *b, struct csl *list)
 				}
 				lasteol=-1;
 			}
-			*++list = *list1++;
+			*++list = *list1;
+			if (found_end) {
+				list1->a += list1->len;
+				list1->b += list1->len;
+				list1->len = 0;
+			} else
+				list1++;
 		}
+		if (list->len && list1 == list) abort();
 	}
-	list[1] = list1[0];
+	// list[1] = list1[0];
 }
 
 struct csl *diff(struct file a, struct file b)
@@ -335,7 +356,7 @@ struct csl *diff(struct file a, struct file b)
 	return csl;
 }
 
-struct csl *diff_partial(struct file a, struct file b, 
+struct csl *diff_partial(struct file a, struct file b,
 			 int alo, int ahi, int blo, int bhi)
 {
 	struct v *v;

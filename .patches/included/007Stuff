@@ -1,0 +1,193 @@
+Status: ok
+
+lots of stuff.
+
+
+Signed-off-by: Neil Brown <neilb@cse.unsw.edu.au>
+
+### Diffstat output
+ ./bestmatch.c |    2 ++
+ ./merge.c     |    9 +++++++++
+ ./p           |   49 ++++++++++++++++++++++++++++++++++++-------------
+ 3 files changed, 47 insertions(+), 13 deletions(-)
+
+diff ./bestmatch.c~current~ ./bestmatch.c
+--- ./bestmatch.c~current~	2004-02-03 14:23:04.000000000 +1100
++++ ./bestmatch.c	2004-02-03 14:23:25.000000000 +1100
+@@ -346,6 +346,8 @@ void remap(struct best *best, int cnt,
+ 	int pa,pb;
+ 	pa=pb=0;
+ 
++	if (a1.elcnt == 0 && a2.elcnt == 0) return;
++
+ 	for (b=1; b<cnt; b++) {
+ #if 0
+ 		printf("best %d,%d  %d,%d\n",
+
+diff ./merge.c~current~ ./merge.c
+--- ./merge.c~current~	2004-02-03 13:20:45.000000000 +1100
++++ ./merge.c	2004-02-03 14:08:04.000000000 +1100
+@@ -422,6 +422,15 @@ static int advance(struct csl *c1, struc
+ 		if (c1[p->c1].len == 0 ||
+ 		    a < c1[p->c1].a + c1[p->c1].len) {
+ 			p->in_a = 0;
++			/*
++			 * if we've slid, make sure not to skip over
++			 * the stuff in c2.
++			 */
++			if(slid && p->c2 != -1 && c2[p->c2].a == b && 
++			   c2[p->c2].b > c2[p->c2].a) {
++				c -= c2[p->c2].b - c2[p->c2].a;
++			}
++
+ 			p->pos = c;
+ 			slid = 1;
+ 			goto retry;
+
+diff ./p~current~ ./p
+--- ./p~current~	2004-02-03 13:19:20.000000000 +1100
++++ ./p	2005-02-24 10:35:56.000000000 +1100
+@@ -151,7 +151,7 @@ diff_one()
+ 	else
+ 		echo
+ 		echo "diff ./$1~current~ ./$1"
+-		diff --show-c-function -u ./$1~current~ ./$1
++		diff -N --show-c-function -u ./$1~current~ ./$1
+ 	fi
+ }
+ 
+@@ -190,14 +190,19 @@ swap_one()
+ 	mv "$1.tmp" "$1~current~"
+ }
+ 
++CERT='Signed-off-by: Neil Brown <neilb@cse.unsw.edu.au>'
+ make_diff()
+ {
+    {
+ 	[ -s .patches/status ] && echo "Status: `cat .patches/status`"
++	[ -s .patches/notes ] && { echo; cat .patches/notes ; }
++	if grep -F "$CERT" .patches/notes > /dev/null 2>&1
++	then :
++        else echo "$CERT"
++	fi
+ 	echo
+-	[ -s .patches/notes ] && { cat .patches/notes ; echo; }
+ 	all_files diff_one > .patches/tmp
+-	echo " ----------- Diffstat output ------------"
++	echo "### Diffstat output"
+ 	diffstat -p0 2> /dev/null < .patches/tmp
+ 	cat .patches/tmp
+ 	[ -s .patches/tmp ] || rm .patches/patch
+@@ -227,7 +232,7 @@ find_prefix()
+ 	file=`lsdiff $1 | head -1`
+ 	orig=$file
+ 	prefix=0
+-	while [ -n "$file" -a ! -f "$file" ]
++	while [ \( -n "$file" -a ! -f "$file" \) -o " $file" != " ${file#/}" ]
+ 	do
+ 	    file=`expr "$file" : '[^/]*/\(.*\)'`
+ 	    prefix=`expr $prefix + 1`
+@@ -253,6 +258,7 @@ extract_notes()
+     { head = 0; }
+     $0 == "" { blanks++; next; }
+     $0 ~ /^ *---/ { exit }
++    $0 ~ /^###/ { exit }
+     {   while (blanks > 0) {
+ 	   blanks--; print "";
+ 	}
+@@ -481,7 +487,7 @@ case $cmd in
+ 	echo "Using $pfile..."
+ 
+ 	# make sure patch applies in reverse
+-	if patch -s --fuzz=0 --dry-run -f -p0 -R < "$pfile"
++	if patch -s --fuzz=0  -l --dry-run -f -p0 -R < "$pfile"
+ 	then echo "Yep, that seems to be included"
+ 	elif [ -n "$force" ]
+ 	then echo "It doesn't apply reverse-out cleanly, but you asked for it..."
+@@ -568,7 +574,7 @@ case $cmd in
+ 	;;
+ 
+   publish )
+-	name=`date -u +%Y-%m-%d:%H`
++	name=`date -u +%Y-%m-%d-%H`
+ 	if [ -d .patches/dest ]
+ 	then : good
+ 	else echo >&2 No destination specified at .patches/dest ; exit 1;
+@@ -714,9 +720,18 @@ case $cmd in
+ 	    exit 1;
+ 	fi
+ 	messid="<`date +'%Y%m%d%H%M%S'`.$$.patches@`uname -n`>"
+-	cnt=$(ls .patches/applied/???${1}* | wc -l)
+-	cnt=$(echo $cnt)  # discard spaces
++	cnt=0
++	for patch in .patches/applied/???${1}*
++	do
++          n=${patch##*/}
++	  n=${n:0:3}
++	  if [ -n "$2" ] && [ $2 -gt $n ] ; then continue; fi
++	  if [ -n "$3" ] && [ $3 -lt $n ] ; then continue; fi
++	  cnt=$(expr $cnt + 1 )
++	done
+ 	this=1
++	if [ $cnt -gt 1 ]
++	then
+ 	{
+ 	    cat .patches/owner
+ 	    echo "To: `cat .patches/maintainer`"
+@@ -724,7 +739,7 @@ case $cmd in
+ 		while read word prefix addr
+ 		  do if [ " $word" = " $1" ] ; then
+ 			echo "Cc: $addr" 
+-			sprefix="$prefix - "
++			sprefix="$prefix "
+ 		    fi
+ 		  done < .patches/cc
+ 	    fi
+@@ -732,15 +747,20 @@ case $cmd in
+ 		  then
+ 		  echo "Subject: [PATCH] $sprefix Intro"
+ 		  else
+-		  echo "Subject: [PATCH] ${sprefix}0 of $cnt - Introduction"
++		  echo "Subject: [PATCH ${sprefix}0 of $cnt] Introduction"
+ 	    fi
+ 	    echo "Message-ID: $messid"
+ 	    echo
+ 	    echo PUT COMMENTS HERE
+ 	} > .patches/mail/000Intro
++	fi
+ 
+ 	for patch in .patches/applied/???${1}*
+ 	do
++          n=${patch##*/}
++	  n=${n:0:3}
++	  if [ -n "$2" ] && [ $2 -gt $n ] ; then continue; fi
++	  if [ -n "$3" ] && [ $3 -lt $n ] ; then continue; fi
+ 	  {
+ 	      sprefix=
+ 	      cat .patches/owner
+@@ -749,19 +769,22 @@ case $cmd in
+ 		  while read word prefix addr
+ 		    do if [ " $word" = " $1" ] ; then
+ 			echo "Cc: $addr" 
+-			sprefix="$prefix - "
++			sprefix="$prefix "
+ 		    fi
+ 		  done < .patches/cc
+ 	      fi
+ 	      head=`sed -e '/^Status/d' -e '/^$/d' -e q $patch`
+ 	      if [ $cnt = 1 ]
+ 		  then
+-		  echo "Subject: [PATCH] $sprefix $head"
++		  echo "Subject: [PATCH $sprefix] $head"
+ 		  else
+-		  echo "Subject: [PATCH] $sprefix$this of $cnt - $head"
++		  echo "Subject: [PATCH $sprefix$this of $cnt] $head"
+ 	      fi
+ 	      echo "References: $messid"
+ 	      echo
++	      if [ $cnt = 1 ] ; then
++		  echo "### Comments for Changeset"
++	      fi
+ 	      sed -e '1,3d' $patch
+ 	  } > .patches/mail/${patch#.patches/applied/}
+ 	  this=$(expr $this + 1)

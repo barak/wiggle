@@ -1,0 +1,24 @@
+Status: ok
+
+Cope if 'best' doesn't find anything any good.
+
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./bestmatch.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff ./bestmatch.c~current~ ./bestmatch.c
+--- ./bestmatch.c~current~	2004-02-03 14:23:25.000000000 +1100
++++ ./bestmatch.c	2006-02-10 12:58:18.000000000 +1100
+@@ -348,7 +348,8 @@ void remap(struct best *best, int cnt,
+ 
+ 	if (a1.elcnt == 0 && a2.elcnt == 0) return;
+ 
+-	for (b=1; b<cnt; b++) {
++	for (b=1; b<cnt; b++)
++	   if (best[b].val>0) {
+ #if 0
+ 		printf("best %d,%d  %d,%d\n",
+ 		       best[b].xlo,best[b].ylo,

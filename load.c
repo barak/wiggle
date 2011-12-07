@@ -19,12 +19,7 @@
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *    Author: Neil Brown
- *    Email: <neilb@cse.unsw.edu.au>
- *    Paper: Neil Brown
- *           School of Computer Science and Engineering
- *           The University of New South Wales
- *           Sydney, 2052
- *           Australia
+ *    Email: <neilb@suse.de>
  */
 
 /*
@@ -76,7 +71,7 @@ static struct stream load_regular(int fd)
 	struct stat stb;
 	struct stream s;
 	fstat(fd, &stb);
-	
+
 	s.len = stb.st_size;
 	s.body = malloc(s.len);
 	if (s.body) {
