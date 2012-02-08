@@ -1,16 +1,23 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE=1
 
-CFLAGS_EXTRA = -Wall -pedantic
-CC	     = gcc
+CFLAGS_EXTRA+=-g -std=c99 -O2
+CFLAGS_EXTRA+=-pedantic -Wall -Wextra
+CFLAGS_EXTRA+=-Wno-uninitialized
+CFLAGS_EXTRA+=-Wno-unused-parameter
+
+# for fdopen()
+CPPFLAGS_EXTRA+=-D_POSIX_SOURCE
+# for mkstemp(), strdup()
+CPPFLAGS_EXTRA+=-D_BSD_SOURCE
 
 override_dh_installchangelogs:
 	dh_installchangelogs ChangeLog
 
 override_dh_auto_build:
-	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS) $(CFLAGS_EXTRA)"
+	$(MAKE) wiggle \
+		CFLAGS+="$(CFLAGS) $(CFLAGS_EXTRA)" \
+		CPPFLAGS+="$(CPPFLAGS) $(CPPFLAGS_EXTRA)"
 
 %:
 	dh $@ --parallel
-
-# End of file
