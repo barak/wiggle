@@ -1,4 +1,11 @@
 *.o
-demo.patch
-wiggle
+/.pc/
+/debian/*.debhelper.log
+/debian/*.substvars
+/debian/files
+/debian/wiggle/
+/demo.patch/
+/tests/.time
+/wiggle
+/wiggle.man
 TAGS
