@@ -1,3 +1,11 @@
+wiggle (0.8+git-1) unstable; urgency=low
+
+  * Merge upstream changes
+    - remove obsolete quilt patches
+  * dh 8 and misc build and packaging tweaks
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Wed, 08 Feb 2012 22:52:54 +0000
+
 wiggle (0.8-1) unstable; urgency=low
 
   * New upstream release
