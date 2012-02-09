@@ -1,0 +1,32 @@
+From: "Barak A. Pearlmutter" <barak+git@cs.nuim.ie>
+Date: Wed, 8 Feb 2012 15:49:02 +0000
+Subject: conditional arms
+
+Silence warning about B missing in conditional construct ( A ? B : C )
+---
+ vpatch.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/vpatch.c b/vpatch.c
+index 36ecb16..8fe296f 100644
+--- a/vpatch.c
++++ b/vpatch.c
+@@ -1799,7 +1799,7 @@ static struct plist *parse_patch(FILE *f, FILE *of, int *np)
+ 			if (of)
+ 				fputc(c, of);
+ 
+-		start = ftell(of ?: f);
++		start = ftell(of ? of : f);
+ 
+ 		if (c == EOF)
+ 			break;
+@@ -1815,7 +1815,7 @@ static struct plist *parse_patch(FILE *f, FILE *of, int *np)
+ 			else
+ 				pos = target2;
+ 		}
+-		end = ftell(of ?: f);
++		end = ftell(of ? of : f);
+ 		if (pos > target2)
+ 			end -= (pos - target2) - 1;
+ 		plist = patch_add_file(plist, np,
+-- 
