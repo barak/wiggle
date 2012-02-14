@@ -1,35 +1,14 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE=1
 
-CFLAGS_EXTRA = -Wall -pedantic
-CC	     = gcc
+include /usr/share/dpkg/buildflags.mk
+CFLAGS	+= -Wall -pedantic
+LDFLAGS += -Wl,--as-needed
 
 override_dh_auto_build:
-	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS) $(CFLAGS_EXTRA)"
-
-binary-arch: build install
-	# target: binary-arch - Build architecture-dependent files.
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs
-	dh_installdocs
-	dh_installexamples
-	dh_installman
-	dh_link
-	dh_strip
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-arch
+	$(MAKE) CC="gcc" CFLAGS="$(CFLAGS) $(LDFLAGS)"
 
 %:
 	dh $@
-
-.PHONY: binary-arch binary
 
 # End of file
