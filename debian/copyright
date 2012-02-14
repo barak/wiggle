@@ -1,40 +1,40 @@
-This package was debianized by:
+Format: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?revision=174
+X-Format: http://dep.debian.net/deps/dep5
+Upstream-Name: wiggle
+Upstream-Contact: Neil Brown <neilb@suse.de>
+Source: git://neil.brown.name/wiggle
+X-Upstream-Vcs: git://neil.brown.name/wiggle
+X-Upstream-Bugs:
+X-Source: http://neil.brown.name/git?p=wiggle;a=summary
+X-Comment:
+ Upstream homepage at http://neil.brown.name
 
-    Igor Genibel <igenibel@debian.org>
-    on 2003-06-10 12:24:49+02 Tue.
+Files: *
+Copyright:
+ 2010-2012 Jari Aalto <jari.aalto@cante.net>
+ 2007 Baruch Even <baruch@debian.org>
+ 2004 Nicolas Thomas <nthomas@free.fr>
+ 2003 Igor Genibel <igenibel@debian.org>
+License: GPL-2+
 
-It was downloaded from:
+Files: debian/*
+Copyright:
+ 2012 Jari Aalto <jari.aalto@cante.net>
+License: GPL-2+
 
-    git://neil.brown.name/wiggle
-    http://neil.brown.name/git?p=wiggle;a=summary
-
-Upstream Author:
-
-    Neil Brown <neilb@suse.de> http://neil.brown.name
-
-License:
-
-    This package is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This package is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>
-
-The Debian packaging is licensed under the GPL version 2 of the
-License, or (at your option) any later version, and is:
-
-    Copyright (C) 2010          Jari Aalto <jari.aalto@cante.net>
-    Copyright (C) 2007          Baruch Even <baruch@debian.org>
-    Copyright (C) 2004		Nicolas Thomas <nthomas@free.fr>
-    Copyright (C) 2003          Igor Genibel <igenibel@debian.org>
-
-On Debian systems, the complete text of the GNU General
-Public License can be found in "/usr/share/common-licenses/GPL-2".
-
+License: GPL-2+
+ This package is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License can be found in "/usr/share/common-licenses/GPL-2".
