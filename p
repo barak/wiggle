@@ -87,17 +87,73 @@ get_meta()
 	status=`cat .patches/status 2> /dev/null`
 }
 
+nl='
+'
+get_conf()
+{
+	_name=$1
+	_context=$2
+	_result=
+	_active=yes
+	_sep=
+	[ -f .patches/config ] || >> .patches/config
+	while read a b c
+	do
+	    case $a in
+		    '[global]' ) _active=yes ;;
+		    "[$_context]") _active=yes ;;
+		    "["*"]" ) _active= ;;
+		    * ) if [ " $b" == " =" -a " $a" = " $_name" -a -n "$_active" ];
+			    then
+			    if [ -z "$c" ]; then
+				_result= _sep=
+			    else
+			        _result="$_result$_sep$c"
+			        _sep=$nl
+                            fi
+			    fi
+			    ;;
+	    esac
+	done < .patches/config
+	_result=$(echo "$_result" | sed 's/^"//' )
+	eval $_name=\"\$_result\"
+}
+
+upgrade_one()
+{
+	# move $1~current~ to .patches/current/$1 and same for orig
+	fl=/$1
+	for f in current orig
+	do
+	    if [ -f "$1~$f~" ]
+		then
+		    mkdir -p ".patches/$f${fl%/*}"
+		    mv "$1~$f~" ".patches/$f/$1"
+	    fi
+	done
+}
+
+
 forget_one()
 {
-	if true # || cmp -s "$1" "$1~current~" && cmp -s "$1" "$1~orig~"
+	if true # || cmp -s "$1" ".patches/curent/$1~" && cmp -s "$1" ".patches/orgi/$1"
 	then
-            rm -f "$1~current~" "$1~orig~"
+            rm -f ".patches/current/$1" ".patches/orig/$1"
 	    chmod -w "$1"
 	else
 	    echo >&2 "ERROR $1 doesn't match original"
 	fi
 }
 
+rebase_one()
+{
+    f="/$1"
+    mkdir -p .patches/orig${f%/*}
+    mkdir -p .patches/current${f%/*}
+    rm -f .patches/orig$f .patches/current$f
+    cp -p $1 .patches/orig$f
+    cp -p $1 .patches/current$f
+}
 
 snap_one()
 {
@@ -117,19 +173,22 @@ check_out()
 {
 	file=$1
 	file=${file#./}
+	f=/$file; f=${f%/*}
 	[ -f $file ] || >> $file
 	if [ -f $file ]
 	    then
-	    if [ ! -f "$file~orig~" ] ; then
-		mv "$file" "$file~orig~"
-		cp "$file~orig~" "$file"
+	    if [ ! -f ".patches/orig/$file" ] ; then
+		mkdir -p .patches/orig/$f
+		mv "$file" ".patches/orig/$file"
+		cp ".patches/orig/$file" "$file"
 		echo $file >> .patches/files
 		sort -o .patches/files .patches/files
 		chmod u+w "$file"
 	    fi
-	    if [ ! -f "$file~current~" ] ; then
-		mv "$file" "$file~current~"
-		cp "$file~current~" "$file"
+	    if [ ! -f ".patches/current/$file" ] ; then
+		mkdir -p .patches/current/$f
+		mv "$file" ".patches/current/$file"
+		cp ".patches/current/$file" "$file"
 	    fi
 	else
 	    echo >&2 Cannot checkout $file
@@ -146,63 +205,64 @@ all_files()
 
 diff_one()
 {
-	if cmp -s "$1~current~" "$1" || [ ! -f "$1" -a ! -f "$1~current~" ]
+	if cmp -s ".patches/current/$1" "$1" || [ ! -f "$1" -a ! -f ".patches/current/$1" ]
 	then :
 	else
 		echo
-		echo "diff ./$1~current~ ./$1"
+		echo "diff .prev/$1 ./$1"
 		if [ " $2" = " -R" ]
 		then
-		  diff -N --show-c-function -u ./$1 ./$1~current~
+		  diff -N --show-c-function -u "./$1" "./.patches/current/$1"
 		else
-		  diff -N --show-c-function -u ./$1~current~ ./$1
+		  diff -N --show-c-function -u "./.patches/current/$1" "./$1"
 		fi
 	fi
 }
 
 diff_one_orig()
 {
-	if cmp -s "$1~orig~" "$1"
+	if cmp -s ".patches/orig/$1" "$1"
 	then :
 	else
 		echo
-		echo "diff ./$1~orig~ ./$1"
-		diff --show-c-function -u ./$1~orig~ ./$1
+		echo "diff ./.patches/orig/$1 ./$1"
+		diff --show-c-function -u "./.patches/orig/$1" "./$1"
 	fi
 }
 
 commit_one()
 {
-    rm -f "$1~current~"
+    rm -f ".patches/current/$1"
     if [  -f "$1" ] ; then
-	mv "$1" "$1~current~"
-	cp -p "$1~current~" $1
+	mv "$1" ".patches/current/$1"
+	cp -p ".patches/current/$1" $1
 	chmod u+w $1
     fi
 }
 
 discard_one()
 {
-	cmp -s "$1~current~" $1 || { rm -f "$1" ; cp "$1~current~" $1; }
+	cmp -s ".patches/current/$1" $1 || { rm -f "$1" ; cp ".patches/current/$1" $1; }
 	chmod u+w $1
 }
 
 swap_one()
 {
 	mv "$1" "$1.tmp"
-	mv "$1~current~" "$1"
-	mv "$1.tmp" "$1~current~"
+	mv ".patches/current/$1" "$1"
+	mv "$1.tmp" ".patches/current/$1"
 }
 
-CERT='Signed-off-by: Neil Brown <neilb@suse.de>'
 make_diff()
 {
-   {
+	get_conf tagline
+	upgrade_one "$1"
+   { {
 	[ -s .patches/status ] && echo "Status: `cat .patches/status`"
 	[ -s .patches/notes ] && { echo; cat .patches/notes ; }
-	if grep -F "$CERT" .patches/notes > /dev/null 2>&1
+	if [ -z "$tagline" ] || grep -F "$tagline" .patches/notes > /dev/null 2>&1
 	then :
-        else echo "$CERT"
+        else echo "$tagline"
 	fi
 	echo
 	all_files diff_one $1 > .patches/tmp
@@ -211,7 +271,7 @@ make_diff()
 	cat .patches/tmp
 	[ -s .patches/tmp ] || rm .patches/patch
 	rm .patches/tmp
-   } > .patches/patch
+   } | sed 's,^--- ./.patches/current/,--- .prev/,' ; } > .patches/patch
 }
 
 save_patch()
@@ -237,13 +297,16 @@ find_prefix()
 	file=`lsdiff $1 | head -$n | tail -1`
 	orig=$file
 	prefix=0
+	case $file in
+	    b/* ) prefix=1; return
+	esac
 	while [ \( -n "$file" -a ! -f "$file" \) -o " $file" != " ${file#/}" ]
 	do
 	    file=`expr "$file" : '[^/]*/\(.*\)'`
 	    prefix=`expr $prefix + 1`
 	done
 	if [ -z "$file" ]
-	then echo "Cannot find $orig" >&2 
+	then echo "Cannot find $orig" >&2
 	   if [ $n -gt 4 ]
 	   then exit 2;
 	   else find_prefix "$1" $[n+1]
@@ -321,9 +384,10 @@ case $cmd in
 	if [ ! -f "$pfile" ]
 	then echo >&2 "Cannot find unique patch '$1' - found: $pfile"; exit 1;
 	fi
-	if grep -s '^+.*[ 	]$' $pfile > /dev/null
+	ptn='^\+.*((	|[^	].{7}){10}.|[ 	]$)'
+	if grep -E -s "$ptn" $pfile > /dev/null
 	then
-	    ${PAGER-less -p '^\+.*[ 	]$'} $pfile
+	    ${PAGER-less -p "$ptn"} $pfile
 	else
 	    ${PAGER-less} $pfile
 	fi
@@ -379,7 +443,10 @@ case $cmd in
 	    echo >&2 remove trailing spaces/tabs first !!
 #	    exit 1
 	fi
-	if [ -s .patches/to-resolv ]
+	if [ $cmd == "commit" -a -f scripts/checkpatch.pl ] ; then
+	    perl scripts/checkpatch.pl .patches/patch
+	fi
+	if [ -s .patches/to-resolve ]
 	then echo "Please resolve outstanding conflicts first with 'p resolve'"
 	    exit 1
 	fi
@@ -506,7 +573,7 @@ case $cmd in
 	echo "Using $pfile..."
 
 	# make sure patch applies in reverse
-	if patch -s --fuzz=0  -l --dry-run -f -p0 -R < "$pfile"
+	if patch -s --fuzz=2  -l --dry-run -f -p0 -R < "$pfile"
 	then echo "Yep, that seems to be included"
 	elif [ -n "$force" ]
 	then echo "It doesn't apply reverse-out cleanly, but you asked for it..."
@@ -520,7 +587,7 @@ case $cmd in
   review )
 	# there are some patches in .removed that may be included in the current source
 	# we try to backout each one. If it backs out successfully, we move it to
-	# .reviewed and conitnue, else  we abort
+	# .reviewed and continue, else  we abort
 	# Once this has been done often enough, 'reviewed' should be run to
 	# move stuff to 'included' and to revert those patches
 	force=
@@ -528,9 +595,20 @@ case $cmd in
 	    force=yes; shift
 	fi
 	make_diff; get_meta
-	if [ -s .patches/path ]
+	if [ -s .patches/patch ]
         then
 	    echo >&2 Patch $name already open, please deal with it; exit 1;
+	fi
+	if [ -f .patches/in-review ]
+	then :
+	else
+		applied=`ls .patches/applied`
+		if [ -n "$applied" ]
+		then
+			echo >&2 Cannot review patches while any are applied.
+			exit 1;
+		fi
+		> .patches/in-review
 	fi
 	if [ $# -eq 0 ]
 	then
@@ -600,6 +678,11 @@ case $cmd in
 	      # all the currently applied patches are patches that have been
 	      # reviewed as included.
 	      # rip them out and stick them (reversed) into included.
+	      if [ ! -f .patches/in-review ]
+		  then
+		      echo >&2 Not currently reviewing patches!
+		      exit 1;
+	      fi
 	      while p open last
 	      do
 		make_diff -R
@@ -609,6 +692,7 @@ case $cmd in
 		all_files discard_one
 		rm -f .patches/name .patches/status .patches/notes
 	      done
+	      rm .patches/in-review
 	      ;;
   list )
 	    echo "Applied patches are:"
@@ -618,7 +702,17 @@ case $cmd in
 	    ls .patches/removed
 	    exit 0
 	    ;;
+  lista )
+	    echo "Applied patches are:"
+	    ls .patches/applied
+	    exit 0
+	    ;;
  apply )
+	if [ -f .patches/in-review ]
+	then
+		echo >&2 Cannot apply patches while reviewing other - use p reviewed
+		exit 1
+	fi
 	force= append=
 	if [ " $1" = " -f" ]; then
 	    force=yes; shift
@@ -658,11 +752,12 @@ case $cmd in
 	then echo OK, it seems to apply
 	elif [ -n "$force" ]
 	then echo "It doesn't apply cleanly, but you asked for it...."
-	    echo "Saving original at .patches/last-applied"
-	    cp $pfile .patches/last-applied
+	    echo "Saving original at .patches/last-conflict"
+	    cp $pfile .patches/last-conflict
 	else echo >&2 "Sorry, patch doesn't apply"; exit 1
 	fi
 	# lets go for it ...
+	cp $pfile .patches/last-applied
 	patch --fuzz=0 -f -p$prefix < "$pfile" | tee .patches/tmp
 	sed -n -e '2q' -e 's/^Status: *//p' $pfile > .patches/status
 	base=${pfile##*/}
@@ -685,6 +780,16 @@ case $cmd in
         esac
 	;;
 
+  unapply )
+	get_meta
+	mv .patches/last-applied .patches/patch
+	save_patch removed $name
+	echo Restored to $new$name
+	make_diff
+	mv .patches/patch .patches/last-purge
+	all_files discard_one
+	rm -f .patches/name .patches/status .patches/notes
+	;;
   publish )
 	name=`date -u +%Y-%m-%d-%H`
 	if [ -d .patches/dest ]
@@ -714,7 +819,7 @@ case $cmd in
 	> .patches/files
 	;;
   openall )
-        while p open last && p discard ; do : ; done
+        while $0 open last && $0 discard ; do : ; done
 	;;
   recommit )
 	make_diff
@@ -741,7 +846,7 @@ case $cmd in
 	then echo >&2 "Cannot find unique patch '$1' - found: $pfile"; exit 1
 	fi
 	while [ -s "$pfile" ]  &&
-	     p apply last && p commit ; do : ; done
+		$0 apply last && $0 commit ; do : ; done
 	;;
   decommit )
 	make_diff
@@ -768,7 +873,24 @@ case $cmd in
 	then echo >&2 "Cannot find unique patch '$1' - found: $pfile"; exit 1
 	fi
 	while [ -s "$pfile" ]  &&
-	     p open last && p discard ; do : ; done
+	     $0 open last && $0 discard ; do : ; done
+	;;
+
+  rebase )
+	# move all applied patches to included, and
+	# copy current to orig and current
+	make_diff
+	if [ -s .patches/patch ]
+	then
+	    echo >&2 Patch already open - please commit; exit 1;
+	fi
+	for p in `ls .patches/applied`
+	do
+	  name=${p##[0-9][0-9][0-9]}
+	  mv .patches/applied/$p .patches/patch
+	  save_patch included $name
+	done
+	all_files rebase_one
 	;;
   snapshot )
 	all_files snap_one
@@ -778,6 +900,9 @@ case $cmd in
 	;;
   snapback )
 	all_files snap_back
+	;;
+  upgrade )
+	all_files upgrade_one
 	;;
   resolve )
         if [ ! -s .patches/resolving ]
@@ -795,6 +920,29 @@ case $cmd in
 	    echo $file >> .patches/to-resolve
 	done
 	> .patches/resolving
+	;;
+
+  export )
+	# there must be only one patch.  We
+	# git commit, p commit, p rebase
+	if [ -n "`ls .patches/applied`" ]
+	then
+	    echo 'Cannot export when there are applied patches'
+	    exit 1;
+	fi
+	make_diff
+	if [ -s .patches/patch ]
+	then
+	    # Ok, go for it.
+	    git add `cat .patches/files`
+	    author=`grep '^From:' .patches/notes | head -n 1 | sed 's/From: *//'`
+	    if [ -n "$author" ]
+		then git commit --author="$author" -a -F .patches/notes
+		else git commit -a -F .patches/notes
+	    fi
+	    $0 commit
+	    $0 rebase
+	fi
 	;;
   pull )
         cd .patches/SOURCE && bk pull
@@ -823,34 +971,65 @@ case $cmd in
 	    exit 1;
 	fi
 	mkdir .patches/mail
-	if [ ! -s .patches/maintainer ] ; then
+
+	get_conf author $1
+	get_conf header $1
+	if [ -n "$author" ]
+	then
+		headers="From: $author"
+		if [ -n "$header" ] ; then
+		    headers="$headers$nl$header"
+		fi
+	elif [ -s .patches/owner ]; then
+		headers=`cat .patches/owner`;
+        else
+		echo Please add author information to .patches/config
+		exit 1
+	fi
+	get_conf maintainer $1
+	if [ -z "$maintainer" -a -s .patches/maintainer ]
+	    then
+		maintainer=`cat .patches/maintainer`
+	fi
+
+	if [ -z "$maintainer" ] ; then
 	    echo "No maintainer - please add one"
 	    exit 1;
 	fi
-	if [ ! -s .patches/owner ] ; then
-	    echo "Your address and other headers must be in .patches/owner"
-	    exit 1;
-	fi
+
 	messid="<`date +'%Y%m%d%H%M%S'`.$$.patches@`uname -n`>"
 	cnt=0
+	> .patches/.tmp.cc
 	for patch in .patches/applied/???${1}*
 	do
           n=${patch##*/}
 	  n=${n:0:3}
 	  if [ -n "$2" ] && [ $2 -gt $n ] ; then continue; fi
 	  if [ -n "$3" ] && [ $3 -lt $n ] ; then continue; fi
+	  if [ -n "$4" ]; then
+	      case ,$4,  in *,$n,* ) ;; *) continue; esac
+	  fi
 	  cnt=$(expr $cnt + 1 )
+	  sed -n -e 's/^\(Signed-[Oo]ff-[Bb]y\|Acked-[Bb]y\|Cc\|From\): */Cc: /p' $patch | grep -v neilb >> .patches/.tmp.cc
 	done
+	get_conf cc $1
+	get_conf tag $1
 	this=1
 	if [ $cnt -gt 1 ]
 	then
 	{
-	    if [ -s .patches/owner.$1 ] ; then
-		cat .patches/owner.$1
-	    else
-		cat .patches/owner
+	    echo "$headers"
+	    echo "To: $maintainer"
+
+	    if [ -n "$cc" ]; then
+		    echo "Cc: $cc"
 	    fi
-	    echo "To: `cat .patches/maintainer`"
+	    if [ -n "$tag" ]; then
+		    sprefix="$tag: "
+	    fi
+	    if [ -s .patches/.tmp.cc ]
+	    then sort -u .patches/.tmp.cc
+	    fi
 	    if [ -s .patches/cc ] ; then
 		while read word prefix addr
 		  do if [ " $word" = " $1" ] ; then
@@ -863,7 +1042,7 @@ case $cmd in
 		  then
 		  echo "Subject: [PATCH] ${sprefix}Intro"
 		  else
-		  echo "Subject: [PATCH 000 of $cnt] ${sprefix}Introduction"
+		  echo "Subject: [PATCH 000 of $cnt] ${sprefix}Introduction EXPLAIN PATCH SET HERE"
 	    fi
 	    echo "Message-ID: $messid"
 	    echo
@@ -877,14 +1056,23 @@ case $cmd in
 	  n=${n:0:3}
 	  if [ -n "$2" ] && [ $2 -gt $n ] ; then continue; fi
 	  if [ -n "$3" ] && [ $3 -lt $n ] ; then continue; fi
+	  if [ -n "$4" ]; then
+	      case ,$4,  in *,$n,* ) ;; *) continue; esac
+	  fi
+	  if [ -f ./scripts/checkpatch.pl ] 
+	  then perl ./scripts/checkpatch.pl $patch
+	  fi
 	  {
 	      sprefix=
-	      if [ -s .patches/owner.$1 ] ; then
-		cat .patches/owner.$1
-	      else
-		cat .patches/owner
+	      echo "$headers"
+	      echo "To: $maintainer"
+	      if [ -n "$cc" ]; then
+		    echo "Cc: $cc"
 	      fi
-	      echo "To: `cat .patches/maintainer`"
+	      sed -n -e 's/^\(Signed-[Oo]ff-[Bb]y\|Acked-[Bb]y\|Cc\|From\): */Cc: /p' $patch | grep -v neilb | sort -u
+	      if [ -n "$tag" ]; then
+		    sprefix="$tag: "
+	      fi
 	      if [ -s .patches/cc ] ; then
 		  while read word prefix addr
 		    do if [ " $word" = " $1" ] ; then
@@ -930,6 +1118,16 @@ case $cmd in
 	    fi
 	  done
 	  ;;
+
+   test )
+     # test all removed patches to see which ones are clearly included
+     for p in .patches/removed/*
+     do
+        if patch -R --dry-run -p0 --fuzz=0 -s -f < "$p" > /dev/null 2>&1
+        then echo $p
+        fi
+     done
+     ;;
    help )
 	helpfile=$0.help
 	if [ ! -f $helpfile ]

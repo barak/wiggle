@@ -15,34 +15,26 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *    along with this program; if not, write to the Free Software Foundation, Inc.,
+ *    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  *    Author: Neil Brown
- *    Email: <neilb@cse.unsw.edu.au>
- *    Paper: Neil Brown
- *           School of Computer Science and Engineering
- *           The University of New South Wales
- *           Sydney, 2052
- *           Australia
+ *    Email: <neilb@suse.de>
  */
 
 /*
- * split a stream into words or line
- * When splitting into words we can either be approximate or precise.
- *  Precise mode includes every char in a word.
- *  Approximate mode excluses white-space words and might unite some special chars
+ * Split a stream into words or line
  *
- * In general, a word is one of:
+ * A word is one of:
  *    string of [A-Za-z0-9_]
  *    or string of [ \t]
- *    or single char.
+ *    or single char (i.e. punctuation and newlines).
  *
  * A line is any string that ends with \n
- * 
- * As a special case to allow proper aligning of multiple chunks
- * in a patch, a word starting \0 will include 5 chars and a newline
  *
+ * As a special case to allow proper aligning of multiple chunks
+ * in a patch, a word starting \0 will include 20 chars with a newline
+ * second from the end.
  *
  * We make two passes through the stream.
  * Firstly we count the number of item so an array can be allocated,
@@ -53,59 +45,64 @@
 #include	"wiggle.h"
 #include	<stdlib.h>
 #include	<ctype.h>
-#include	<malloc.h>
+#include	<stdlib.h>
 #define BITS_PER_LONG 32
 
 #include "hash.h"
 
-static int split_internal(char *start, char *end, int type, struct elmnt *list, int reverse)
+static int split_internal(char *start, char *end, int type,
+			  struct elmnt *list)
 {
 	int cnt = 0;
 
 	while (start < end) {
 		char *cp = start;
 
-		if (*cp == '\0' && cp+16 < end && cp[18] == '\n') {
+		if (*cp == '\0' && cp+19 < end && cp[18] == '\n') {
 			/* special word */
-			cp += 19;
-		} else switch(type) {
-		case ByLine:
-			while (cp < end && *cp != '\n')
-				cp++;
-			if (cp<end) cp++;
-			break;
-		case ByWord:
-		case ApproxWord:
-			if (isalnum(*cp) || *cp == '_') {
-				do cp++;
-				while (cp<end && (isalnum(*cp)  || *cp == '_'));
-			} else if (*cp == ' ' || *cp == '\t') {
-				do cp++;
-				while (cp<end && (*cp == ' ' || *cp == '\t'));
-			} else
-				cp++;
-			break;
-		}
-		if (type != ApproxWord || *start =='\0' ||
-		    (isalnum(*start) || *start == '_')) {
-			if (list) {
-				if (reverse) list--;
-				list->start = start;
-				list->len = cp-start;
-				if (*start)
-					list->hash = hash_mem(start, list->len, BITS_PER_LONG);
-				else
-					list->hash = atoi(start+1);
-				if (!reverse) list++;
+			cp += 20;
+		} else
+			switch (type) {
+			case ByLine:
+				while (cp < end && *cp != '\n')
+					cp++;
+				if (cp < end)
+					cp++;
+				break;
+			case ByWord:
+				if (isalnum(*cp) || *cp == '_') {
+					do
+						cp++;
+					while (cp < end
+					       && (isalnum(*cp)
+						   || *cp == '_'));
+				} else if (*cp == ' ' || *cp == '\t') {
+					do
+						cp++;
+					while (cp < end
+					       && (*cp == ' '
+						   || *cp == '\t'));
+				} else
+					cp++;
+				break;
 			}
-			cnt++;
+		if (list) {
+			list->start = start;
+			list->len = cp-start;
+			if (*start)
+				list->hash = hash_mem(start, list->len,
+						      BITS_PER_LONG);
+			else
+				list->hash = atoi(start+1);
+			list++;
 		}
+		cnt++;
 		start = cp;
 	}
 	return cnt;
 }
 
-struct file split_stream(struct stream s, int type, int reverse)
+struct file split_stream(struct stream s, int type)
 {
 	int cnt;
 	struct file f;
@@ -115,10 +112,9 @@ struct file split_stream(struct stream s, int type, int reverse)
 	end = s.body+s.len;
 	c = s.body;
 
-	cnt = split_internal(c, end, type, NULL, reverse);
-/*	fprintf(stderr, "cnt %d\n", cnt);*/
+	cnt = split_internal(c, end, type, NULL);
 	f.list = malloc(cnt*sizeof(struct elmnt));
 
-	f.elcnt = split_internal(c, end, type, f.list + reverse*cnt, reverse);
+	f.elcnt = split_internal(c, end, type, f.list);
 	return f;
 }
