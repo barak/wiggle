@@ -3,7 +3,7 @@
 #OptDbg=-O3
 #OptDbg=-O3 -march=pentium2
 OptDbg=-ggdb
-CFLAGS=$(OptDbg) -Wall -Werror
+CFLAGS=$(OptDbg) -Wall -Werror -Wstrict-prototypes -Wextra -Wno-unused-parameter
 
 # STRIP = -s
 INSTALL = /usr/bin/install
@@ -12,21 +12,23 @@ BINDIR  = /usr/bin
 MANDIR  = /usr/share/man
 MAN1DIR = $(MANDIR)/man1
 MAN5DIR = $(MANDIR)/man5
+LDLIBS = -lncurses
 
 all: wiggle wiggle.man test
 
-
-wiggle : wiggle.o load.o split.o extract.o diff.o bestmatch.o ReadMe.o merge.o
-wiggle.o load.o split.o extract.o diff.o bestmatch.o ReadMe.o merge.o : wiggle.h
+wiggle : wiggle.o load.o split.o extract.o diff.o bestmatch.o ReadMe.o \
+              merge2.o vpatch.o
+wiggle.o load.o split.o extract.o diff.o bestmatch.o ReadMe.o \
+               merge2.o vpatch.o : wiggle.h
 
 test: wiggle dotest
-	sh dotest
+	./dotest
 
 wiggle.man : wiggle.1
 	nroff -man wiggle.1 > wiggle.man
 
 clean:
-	rm -f *.o *.man wiggle .version* version
+	rm -f *.o *.man wiggle .version* demo.patch
 	find . -name core -o -name '*.tmp*' -o -name .tmp | xargs rm -f
 
 install : wiggle wiggle.1
@@ -42,9 +44,12 @@ version : ReadMe.c wiggle.1
 dist : test clean version
 	mkdir -p DIST
 	rm -f DIST/wiggle-`cat version`
-	ln -s .. DIST/wiggle-`cat version`
-	tar czvf DIST/wiggle-`cat version`.tar.gz -h -C DIST --exclude RCS --exclude DIST wiggle-`cat version`
-	rm -f DIST/wiggle-`cat version`
+	git archive --prefix wiggle-`cat version`/  v`cat version` | gzip -9 > DIST/wiggle-`cat version`.tar.gz
 
 v : version
 	cat version
+
+demo.patch: force
+	diff -ru demo.orig demo.patched | sed 's/demo.patched/demo/' > demo.patch
+
+force:
