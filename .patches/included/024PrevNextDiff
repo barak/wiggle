@@ -1,0 +1,78 @@
+Status: ok
+
+Find previous and next diffs.
+
+'P' and 'N'
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./TODO     |    4 ++--
+ ./vpatch.c |   32 +++++++++++++++++++++++++++-----
+ 2 files changed, 29 insertions(+), 7 deletions(-)
+
+diff ./TODO~current~ ./TODO
+--- ./TODO~current~	2006-06-03 19:43:15.000000000 +1000
++++ ./TODO	2006-06-03 19:39:11.000000000 +1000
+@@ -174,13 +174,13 @@ TODO
+ DONE - implemented Grouped diffs
+ DONE - at same time, lines with no diff should show no diff.
+  - put line/col number is status bar
+- - allow cursor to move left/right an scroll-on-demand.
++ - allow cursor to move left/right and scroll-on-demand.
+  - If we have selected 'before', then don't show 'after' lines..
+ DONE - blank after end and before begining
+  - better movement:
+      DONE   top
+      DONE   bottom
+-        next/prev diff
++     DONE   next/prev diff
+         next/prev conflict
+         incr-search
+      DONE   page up/down
+
+diff ./vpatch.c~current~ ./vpatch.c
+--- ./vpatch.c~current~	2006-06-03 19:43:15.000000000 +1000
++++ ./vpatch.c	2006-06-03 19:43:25.000000000 +1000
+@@ -1499,14 +1499,36 @@ void merge_window(struct plist *p, FILE 
+ 			}
+ 			break;
+ 		case 'N':
+-			/* Next 'patch' */
+-			while (pos.p.m >= 0 && ci.merger[pos.p.m].type == Unmatched)
+-				next_mline(&pos,fm,fb,fa,ci.merger, mode);
+-			row = -10;
++			/* Next diff */
++			tpos = pos; row--;
++			do {
++				pos = tpos; row++;
++				next_mline(&tpos, fm,fb,fa,ci.merger, mode);
++			} while (pos.side != 0 && ci.merger[tpos.p.m].type != End);
++			tpos = pos; row--;
++			do {
++				pos = tpos; row++;
++				next_mline(&tpos, fm,fb,fa,ci.merger, mode);
++			} while (pos.side == 0 && ci.merger[tpos.p.m].type != End);
++
++			break;
++		case 'P':
++			/* Previous diff */
++			tpos = pos; row++;
++			do {
++				pos = tpos; row--;
++				prev_mline(&tpos, fm,fb,fa,ci.merger, mode);
++			} while (tpos.side == 0 && tpos.p.m >= 0);
++			tpos = pos; row++;
++			do {
++				pos = tpos; row--;
++				prev_mline(&tpos, fm,fb,fa,ci.merger, mode);
++			} while (tpos.side != 0 && tpos.p.m >= 0);
++
+ 			break;
++
+ 		case 'k':
+ 		case 'p':
+-		case 'P':
+ 		case 'P'-64:
+ 		case KEY_UP:
+ 			if (tnum < 0) tnum = 1;

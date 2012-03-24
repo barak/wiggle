@@ -1,0 +1,32 @@
+Status: ok
+
+Just some TODO updates
+
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./TODO |    7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff .prev/TODO ./TODO
+--- .prev/TODO	2006-06-13 22:22:06.000000000 +1000
++++ ./TODO	2006-06-06 11:16:01.000000000 +1000
+@@ -185,6 +185,7 @@ DONE - blank after end and before begini
+         incr-search
+         find char pos in search and highlight
+         multiple finds per line
++        search to loop around
+ 	switch from forward to reverse.
+      DONE   page up/down
+      DONE   beginning/end of line
+@@ -192,5 +193,7 @@ DONE - blank after end and before begini
+  - handle single .rej file
+  - allow updates to be saved
+  - allow editing???
+- - better colours?
+- - why is there a leading blank line?
++ - better colours? configurable?
++FIXED - why is there a leading blank line?
++ - move to left in tabs doesn't work right
++ - check out md.c and 383MDBlocked in demo directory

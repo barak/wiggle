@@ -1,0 +1,25 @@
+Status: ok
+
+Fix bug where first line always displayed as a blank.
+
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./vpatch.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff ./vpatch.c~current~ ./vpatch.c
+--- ./vpatch.c~current~	2006-06-03 12:05:17.000000000 +1000
++++ ./vpatch.c	2006-06-03 19:13:59.000000000 +1000
+@@ -863,7 +863,9 @@ struct elmnt next_melmnt(struct mpos *po
+ 	int l;
+ 	pos->p.o++;
+ 	while(1) {
+-		switch(pos->p.s) {
++		if (pos->p.m < 0)
++			l = 0;
++		else switch(pos->p.s) {
+ 		case 0: l = m[pos->p.m].al; break;
+ 		case 1: l = m[pos->p.m].bl; break;
+ 		case 2: l = m[pos->p.m].cl; break;

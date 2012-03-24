@@ -1,0 +1,24 @@
+Status: ok
+
+Fix typo in to-resolve name
+
+To make sure we don't commit with resolving conflicts.
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./p |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff .prev/p ./p
+--- .prev/p	2006-06-13 22:56:58.000000000 +1000
++++ ./p	2006-06-13 22:56:59.000000000 +1000
+@@ -423,7 +423,7 @@ case $cmd in
+ 	    echo >&2 remove trailing spaces/tabs first !!
+ #	    exit 1
+ 	fi
+-	if [ -s .patches/to-resolv ]
++	if [ -s .patches/to-resolve ]
+ 	then echo "Please resolve outstanding conflicts first with 'p resolve'"
+ 	    exit 1
+ 	fi

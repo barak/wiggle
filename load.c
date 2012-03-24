@@ -15,8 +15,8 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software Foundation, Inc.,
- *    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *    Author: Neil Brown
  *    Email: <neilb@suse.de>
@@ -38,33 +38,32 @@
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<fcntl.h>
-#include	<stdlib.h>
+#include	<malloc.h>
 
 static void join_streams(struct stream list[], int cnt)
 {
 	/* join all the streams in the list (upto body=NULL)
 	 * into one by re-allocing list[0].body and copying
 	 */
-	int len = 0;
+	int len=0;
 	int i;
 	char *c;
 
-	for (i = 0; i < cnt ; i++)
+	for (i=0; i<cnt ; i++)
 		len += list[i].len;
 
-	c = realloc(list[0].body, len+1);
+	c = realloc(list[0].body, len);
 	if (c == NULL)
 		die();
 
 	list[0].body = c;
 	c  += list[0].len;
 	list[0].len = len;
-	for (i = 1; i < cnt; i++) {
+	for (i=1; i<cnt; i++) {
 		memcpy(c, list[i].body, list[i].len);
 		c += list[i].len;
 		list[i].len = 0;
 	}
-	c[0] = 0;
 }
 
 static struct stream load_regular(int fd)
@@ -74,15 +73,13 @@ static struct stream load_regular(int fd)
 	fstat(fd, &stb);
 
 	s.len = stb.st_size;
-	s.body = malloc(s.len+1);
+	s.body = malloc(s.len);
 	if (s.body) {
 		if (read(fd, s.body, s.len) != s.len) {
 			free(s.body);
 			s.body = NULL;
 		}
-	} else
-		die();
-	s.body[s.len] = 0;
+	} else die();
 	return s;
 }
 
@@ -92,7 +89,7 @@ static struct stream load_other(int fd)
 	struct stream list[10];
 	int i = 0;
 
-	while (1) {
+	while(1) {
 		list[i].body = malloc(8192);
 		if (!list[i].body)
 			die();
@@ -119,11 +116,11 @@ struct stream load_file(char *name)
 
 	s.body = NULL;
 	s.len = 0;
-	if (strcmp(name, "-") == 0)
+	if (strcmp(name, "-")==0)
 		fd = 0;
 	else {
 		fd = open(name, O_RDONLY);
-		if (fd < 0)
+		if (fd <0)
 			return s;
 	}
 

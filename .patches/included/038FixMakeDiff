@@ -1,0 +1,34 @@
+Status: ok
+
+Fix up problem with make_diff
+
+Because creation of .patches/patch is now delayed,
+we couldn't delete it when needed.
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./p |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff .prev/p ./p
+--- .prev/p	2006-06-13 22:57:03.000000000 +1000
++++ ./p	2006-06-13 22:57:04.000000000 +1000
+@@ -241,7 +241,7 @@ make_diff()
+ {
+ 	get_conf tagline
+ 	upgrade_one "$1"
+-   {
++   { {
+ 	[ -s .patches/status ] && echo "Status: `cat .patches/status`"
+ 	[ -s .patches/notes ] && { echo; cat .patches/notes ; }
+ 	if [ -z "$tagline" ] || grep -F "$tagline" .patches/notes > /dev/null 2>&1
+@@ -255,7 +255,7 @@ make_diff()
+ 	cat .patches/tmp
+ 	[ -s .patches/tmp ] || rm .patches/patch
+ 	rm .patches/tmp
+-   } | sed 's,^--- ./.patches/current/,--- .prev/,' > .patches/patch
++   } | sed 's,^--- ./.patches/current/,--- .prev/,' ; } > .patches/patch
+ }
+ 
+ save_patch()
