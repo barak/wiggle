@@ -1,25 +1,24 @@
-Format: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?revision=174
-X-Format: http://dep.debian.net/deps/dep5
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0
 Upstream-Name: wiggle
 Upstream-Contact: Neil Brown <neilb@suse.de>
 Source: git://neil.brown.name/wiggle
 X-Upstream-Vcs: git://neil.brown.name/wiggle
 X-Upstream-Bugs:
 X-Source: http://neil.brown.name/git?p=wiggle;a=summary
-X-Comment:
+X-Upstream-Comment:
  Upstream homepage at http://neil.brown.name
 
 Files: *
 Copyright:
- 2010-2012 Jari Aalto <jari.aalto@cante.net>
- 2007 Baruch Even <baruch@debian.org>
- 2004 Nicolas Thomas <nthomas@free.fr>
- 2003 Igor Genibel <igenibel@debian.org>
+  2010-2012 Jari Aalto <jari.aalto@cante.net>
+  2007 Baruch Even <baruch@debian.org>
+  2004 Nicolas Thomas <nthomas@free.fr>
+  2003 Igor Genibel <igenibel@debian.org>
 License: GPL-2+
 
 Files: debian/*
 Copyright:
- 2012 Jari Aalto <jari.aalto@cante.net>
+  2012 Jari Aalto <jari.aalto@cante.net>
 License: GPL-2+
 
 License: GPL-2+
