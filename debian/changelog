@@ -1,7 +1,7 @@
 wiggle (0.8-2) unstable; urgency=low
 
   * debian/control
-    - (Build-Depends): Update to debhelper 9.
+    - (Build-Depends): Update to debhelper 9. Add libncurses5-dev.
     - (Description): Adjust first line.
     - (Standards-Version): Update to 3.9.3.1.
   * debian/copyright
@@ -11,7 +11,7 @@ wiggle (0.8-2) unstable; urgency=low
     - Use hardened build flags
       http://wiki.debian.org/ReleaseGoals/SecurityHardeningBuildFlags
 
- -- Jari Aalto <jari.aalto@cante.net>  Sat, 24 Mar 2012 05:38:37 -0400
+ -- Jari Aalto <jari.aalto@cante.net>  Sat, 24 Mar 2012 06:07:32 -0400
 
 wiggle (0.8-1) unstable; urgency=low
 
