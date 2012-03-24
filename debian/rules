@@ -4,6 +4,16 @@ export DEB_BUILD_MAINT_OPTIONS	= hardening=+all
 export DEB_CFLAGS_MAINT_APPEND	= -Wall -pedantic
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 
+override_dh_auto_clean:
+	# Save original files
+	tar -cf saved.tar .version-man .version-readme TAGS
+	dh_auto_clean
+
+override_dh_clean:
+	dh_clean
+	# Restore original files
+	tar -xf saved.tar ; rm saved.tar
+
 override_dh_auto_build:
 	$(MAKE) CFLAGS="$(CFLAGS) $(CPPFLAGS) $(LDFLAGS)"
 
