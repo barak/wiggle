@@ -11,7 +11,7 @@ Homepage: http://cgi.cse.unsw.edu.au/~neilb/source/wiggle/
 Package: wiggle
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Description: a program for applying patches with conflicting changes
+Description: apply patches with conflicting changes
  Wiggle is a program for applying patches that 'patch' cannot
  apply due to conflicting changes in the original.
  .
