@@ -3,7 +3,7 @@
 #OptDbg=-O3
 #OptDbg=-O3 -march=pentium2
 OptDbg=-ggdb
-CFLAGS=$(OptDbg) -Wall -Werror -Wstrict-prototypes -Wextra -Wno-unused-parameter
+CFLAGS=$(OptDbg) -Wall -Werror
 
 # STRIP = -s
 INSTALL = /usr/bin/install
@@ -17,12 +17,12 @@ LDLIBS = -lncurses
 all: wiggle wiggle.man test
 
 wiggle : wiggle.o load.o split.o extract.o diff.o bestmatch.o ReadMe.o \
-              merge2.o vpatch.o
-wiggle.o load.o split.o extract.o diff.o bestmatch.o ReadMe.o \
+              merge.o merge2.o vpatch.o
+wiggle.o load.o split.o extract.o diff.o bestmatch.o ReadMe.o merge.o \
                merge2.o vpatch.o : wiggle.h
 
 test: wiggle dotest
-	./dotest
+	sh dotest
 
 wiggle.man : wiggle.1
 	nroff -man wiggle.1 > wiggle.man
@@ -44,12 +44,12 @@ version : ReadMe.c wiggle.1
 dist : test clean version
 	mkdir -p DIST
 	rm -f DIST/wiggle-`cat version`
-	git archive --prefix wiggle-`cat version`/  v`cat version` | gzip -9 > DIST/wiggle-`cat version`.tar.gz
+	ln -s .. DIST/wiggle-`cat version`
+	tar czvf DIST/wiggle-`cat version`.tar.gz -h -C DIST --exclude RCS --exclude DIST wiggle-`cat version`
+	rm -f DIST/wiggle-`cat version`
 
 v : version
 	cat version
 
-demo.patch: force
+demo.patch:
 	diff -ru demo.orig demo.patched | sed 's/demo.patched/demo/' > demo.patch
-
-force:

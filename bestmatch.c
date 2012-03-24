@@ -2,7 +2,6 @@
  * wiggle - apply rejected patches
  *
  * Copyright (C) 2003 Neil Brown <neilb@cse.unsw.edu.au>
- * Copyright (C) 2011 Neil Brown <neilb@suse.de>
  *
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -16,54 +15,33 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software Foundation, Inc.,
- *    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *    Author: Neil Brown
  *    Email: <neilb@suse.de>
  */
 
 /*
- * Find the best match for a patch against a file.  A patch is a
- * sequence of chunks each of which is expected to match a particular
- * locality of the file.  So we expect big gaps between where chunks
- * match, but only small gaps within chunks.
+ * Find the best match for a patch against
+ * a file.
+ * The quality of a match is the length of the match minus the
+ * differential between the endpoints.
+ * We progress through the matrix recording the best
+ * match as we find it.
  *
- * The matching algorithm is similar to that in diff.c, so you should
- * understand that first.  However it takes fewer shortcuts and
- * analyses cost in a more detailed way.
- *
- * We walk the whole matrix in a breadth first fashion following a
- * 'front' on which x+y is constant.  Along this front we examine each
- * diagonal.  For each point we calculate a 'value' for the match so
- * far.  This will be in some particlar chunk.  For each chunk we
- * separately record the best value found so far, and where it was.
- * To choose a new value for each point we calculate based on the
- * previous value on each neighbouring diagonal and on this diagonal.
- *
- * This can result is a set of 'best' matches for each chunk which are
- * not in the same order that the chunks initially were.  This
- * probably isn't desired, so we choose a 'best' best match and
- * recurse on each side of it.
- *
- * The quality of a match is a somewhat complex function that is
- * roughly 3 times the number of matching symbols minus the number
- * of replaced, added, or deleted.  This seems to work.
+ * We perform a full diagonal bredth first traversal assessing
+ * the quality of matches at each point.
+ * At each point there are two or three previous points,
+ * up, back or diagonal if there is a match.
+ * We assess the value of the match at each point and choose the
+ * best.  No match at all is given a score of -3.
  *
  * For any point, the best possible score using that point
  * is a complete diagonal to the nearest edge.  We ignore points
  * which cannot contibute to a better overall score.
  *
- * As this is a fairly expensive search we remove uninteresting
- * symbols before searching.  Specifically we only keep alphanumeric
- * (plus '_') strings.  Spaces and punctuation is ignored.  This should
- * contain enough information to achieve a reliable match while scanning
- * many fewer symbols.
  */
-
-#include	<ctype.h>
-#include	<stdlib.h>
-#include	"wiggle.h"
 
 /* This structure keeps track of the current match at each point.
  * It holds the start of the match as x,k where k is the
@@ -71,18 +49,25 @@
  * Also the length of the match so far.
  * If l == 0, there is no match.
  */
+
+#include	<malloc.h>
+#include	<ctype.h>
+#include	<stdlib.h>
+#include	"wiggle.h"
+
+
 struct v {
-	int x, y;  /* location of start of match */
+	int x,y;  /* location of start of match */
 	int val;  /* value of match from x,y to here */
-	int k;    /* diagonal of last match - if val > 0 */
+	int k;    /* diagonal of last match */
 	int inmatch; /* 1 if last point was a match */
 	int c; /* chunk number */
 };
 
 /*
- * Here we must determine the 'value' of a partial match.
+ * Here must must determine the 'value' of a partial match.
  * The input parameters are:
- *   length - the total number of symbols matched
+ *   length - the total number of symbols matches
  *   errs  - the total number of insertions or deletions
  *   dif   - the absolute difference between number of insertions and deletions.
  *
@@ -91,36 +76,27 @@ struct v {
  *  - When does adding an extra symbol after a small gap improve the match
  *  - When does a match become so bad that we would rather start again.
  *
- * We would like symmetry in our answers so that a good sequence with
- * an out-rider on one end is evaluated the same as a good sequence
- * with an out-rider on the other end.
- *
- * However to do this we cannot really use the value of the good
- * sequence to weigh in the out-riders favour as in the case of a
- * leading outrider, we do not yet know the value of the good
- * sequence.
- *
- * First, we need an arbitrary number, X, to say "Given a single
- * symbol, after X errors, we forget that symbol".  5 seems a good
- * number.
- *
- * Next we need to understand how replacements compare to insertions
- * or deletions.  Probably a replacement is the same cost as an
- * insertion or deletion.  Finally, a few large stretches are better
- * then lots of little ones, so the number of disjoint stretches
- * should be kept low.
- *
+ * We would like symetry in our answers so that a good sequence with an out-rider on
+ * one end is evaluated the same as a good sequence with an out-rider on the other end.
+ * However to do this we cannot really use value of the good sequence to weigh in the
+ * outriders favour as in the case of a leading outrider, we do not yet know the value of
+ * of the good sequence.
+ * First, we need an arbitrary number, X, to say "Given a single symbol, after X errors, we
+ * forget that symbol".  5 seems a good number.
+ * Next we need to understand how replacements compare to insertions or deletions.
+ * Probably a replacement is the same cost as an insertion or deletion.
+ * Finally, a few large stretches are better then lots of little ones, so the number
+ * of disjoint stretches should be kept low.
  * So:
- *   The first match sets the value to 6.
- *   Each consecutive match adds 3
- *   A non-consecutive match which value is still +ve adds 2
+ *   Each match after the first adds 5 to value.
+ *   The first match in a string adds 6.
  *   Each non-match subtracts one unless it is the other half of a replacement.
  *   A value of 0 causes us to forget where we are and start again.
  *
- * We need to not only assess the value at a particular location, but
- * also assess the maximum value we could get if all remaining symbols
- * matched, to help exclude parts of the matrix.  The value of that
- * possibility is 6 times the number of remaining symbols, -1 if we
+ * We need to not only assess the value at a particular location, but also
+ * assess the maximum value we could get if all remaining symbols matched, to
+ * help exclude parts of the matrix.
+ * The value of that possibility is 6 times the number of remaining symbols, -1 if we
  * just had a match.
  */
 /* dir == 0 for match, 1 for k increase, -1 for k decrease */
@@ -136,7 +112,7 @@ static inline void update_value(struct v *v, int dir, int k, int x)
 		v->val += 2+v->inmatch;
 		v->inmatch = 1;
 		v->k = k;
-	} else if (v->val > 0) {
+	} else {
 		v->inmatch = 0;
 		if (dir * (v->k - k) > 0) {
 			/* other half of replacement */
@@ -145,11 +121,6 @@ static inline void update_value(struct v *v, int dir, int k, int x)
 		}
 	}
 }
-
-/* Calculate the best possible value that this 'struct v'
- * could reach if there are 'max' symbols remaining
- * that could possibly be matches.
- */
 static inline int best_val(struct v *v, int max)
 {
 	if (v->val <= 0)
@@ -158,20 +129,28 @@ static inline int best_val(struct v *v, int max)
 		return max*3-1+v->inmatch+v->val;
 }
 
+#ifdef OLDSTUFF
+#if 0
+#define value(v,kk,xx) (v.l ? (v.l - abs(kk-v.k)): -3)
+#else
+# if 0
+# define value(v,kk,xx) (v.l ? (v.l - (xx-v.x)/2): -3)
+# else
+# define value(v,kk,xx) (v.l ? (v.l - (xx-v.x)*2/v.l): -3)
+# endif
+#endif
+#endif
 struct best {
-	int xlo, ylo;
-	int xhi, yhi;
-	int val;
+	int xlo,ylo,xhi,yhi,val;
 };
 
-static inline int min(int a, int b)
-{
+static inline int min(int a, int b) {
 	return a < b ? a : b;
 }
 
-static void find_best(struct file *a, struct file *b,
-		      int alo, int ahi,
-		      int blo, int bhi, struct best *best)
+void find_best(struct file *a, struct file *b,
+	      int alo, int ahi,
+	      int blo, int bhi, struct best *best)
 {
 	int klo, khi, k;
 	int f;
@@ -185,48 +164,50 @@ static void find_best(struct file *a, struct file *b,
 	v[k].c = -1;
 
 	while (f < ahi+bhi) {
-		int x, y;
+		int x,y;
 
 		f++;
-		for (k = klo+1; k <= khi-1 ; k += 2) {
+
+#if 0
+		if (f == ahi+bhi)
+			printf("f %d klo %d khi %d\n", f,klo,khi);
+#endif
+		for (k=klo+1; k <= khi-1 ; k+=2) {
 			struct v vnew, vnew2;
 			x = (k+f)/2;
 			y = x-k;
-			/* first consider the diagonal - if possible
-			 * it is always preferred
-			 */
+			/* first consider the diagonal */
 			if (match(&a->list[x-1], &b->list[y-1])) {
 				vnew = v[k];
-				update_value(&v[k], 0, k, x);
-				if (v[k].c < 0)
-					abort();
-				if (v[k].val > best[v[k].c].val) {
-					int chunk = v[k].c;
-					best[chunk].xlo = v[k].x;
-					best[chunk].ylo = v[k].y;
-					best[chunk].xhi = x;
-					best[chunk].yhi = y;
-					best[chunk].val = v[k].val;
+				update_value(&vnew, 0, k, x);
+#if 0
+				printf("new %d,%d %d,%d (%d) ...",
+				       vnew.x, vy(vnew), x, y, value(vnew,k,x));
+#endif
+				if (vnew.c < 0) abort();
+				if (vnew.val > best[vnew.c].val) {
+#if 0
+					printf("New best for %d at %d,%d %d,%d, val %d\n",
+					       vnew.c, vnew.x, vnew.y,x,y,vnew.val);
+#endif
+					best[vnew.c].xlo = vnew.x;
+					best[vnew.c].ylo = vnew.y;
+					best[vnew.c].xhi = x;
+					best[vnew.c].yhi = y;
+					best[vnew.c].val = vnew.val;
 				}
+				v[k] = vnew;
 			} else {
-				/* First consider a y-step: adding a
-				 * symbol from B */
 				vnew = v[k+1];
-				update_value(&vnew, -1, k, x);
+				update_value(&vnew, -1, k,x);
 				/* might cross a chunk boundary */
-				if (b->list[y-1].len && b->list[y-1].start[0] == 0) {
+				if (b->list[y-1].len && b->list[y-1].start[0]==0) {
 					vnew.c = atoi(b->list[y-1].start+1);
 					vnew.val = 0;
 				}
-
-				/* Not consider an x-step: deleting
-				 * a symbol.  This cannot be a chunk
-				 * boundary as there aren't any in 'A'
-				 */
 				vnew2 = v[k-1];
 				update_value(&vnew2, 1, k, x);
 
-				/* Now choose the best. */
 				if (vnew2.val > vnew.val)
 					v[k] = vnew2;
 				else
@@ -237,32 +218,34 @@ static void find_best(struct file *a, struct file *b,
 		klo--;
 		v[klo] = v[klo+1];
 		x = (klo+f)/2; y = x-klo;
-		update_value(&v[klo], -1, klo, x);
-		if (y <= bhi && b->list[y-1].len && b->list[y-1].start[0] == 0) {
+		update_value(&v[klo],-1,klo,x);
+		if (y<=bhi && b->list[y-1].len && b->list[y-1].start[0]==0) {
 			v[klo].c = atoi(b->list[y-1].start+1);
+#if 0
+			printf("entered %d at %d,%d\n", v[klo].c, x, y);
+#endif
 			v[klo].val = 0;
 		}
 		while (klo+2 < (ahi-bhi) &&
 		       (y > bhi ||
-			(best_val(&v[klo], min(ahi-x, bhi-y)) < best[v[klo].c].val &&
-			 best_val(&v[klo+1], min(ahi-x, bhi-y+1)) < best[v[klo+1].c].val
+			(best_val(&v[klo], min(ahi-x,bhi-y)) < best[v[klo].c].val &&
+			 best_val(&v[klo+1], min(ahi-x,bhi-y+1)) < best[v[klo+1].c].val
 				)
 			       )) {
-			klo += 2;
+			klo+=2;
 			x = (klo+f)/2; y = x-klo;
 		}
 
 		khi++;
 		v[khi] = v[khi-1];
 		x = (khi+f)/2; y = x - khi;
-		update_value(&v[khi], -1, khi, x);
-		while (khi-2 > (ahi-bhi) &&
-		       (x > ahi ||
-			(v[khi].c >= 0 &&
-			 best_val(&v[khi], min(ahi-x, bhi-y)) < best[v[khi].c].val &&
-			 best_val(&v[khi-1], min(ahi-x+1, bhi-y)) < best[v[khi].c].val
-				)
-			       )) {
+		update_value(&v[khi],-1,khi,x);
+		while(khi-2 > (ahi-bhi) &&
+		      (x > ahi ||
+		       (best_val(&v[khi], min(ahi-x,bhi-y)) < best[v[khi].c].val &&
+			best_val(&v[khi-1], min(ahi-x+1,bhi-y)) < best[v[khi].c].val
+			       )
+			      )) {
 			khi -= 2;
 			x = (khi+f)/2; y = x - khi;
 		}
@@ -271,28 +254,22 @@ static void find_best(struct file *a, struct file *b,
 	free(valloc);
 }
 
-/* Join two csl lists together.
- * Simply allocate new space and copy everything in.
- */
-static struct csl *csl_join(struct csl *c1, struct csl *c2)
+struct csl *csl_join(struct csl *c1, struct csl *c2)
 {
-	struct csl *c, *cd,  *rv;
+	struct csl *c,*cd,  *rv;
 	int cnt;
-
 	if (c1 == NULL)
 		return c2;
 	if (c2 == NULL)
 		return c1;
 
 	cnt = 1; /* the sentinal */
-	for (c = c1; c->len; c++)
-		cnt++;
-	for (c = c2; c->len; c++)
-		cnt++;
+	for (c=c1; c->len; c++) cnt++;
+	for (c=c2; c->len; c++) cnt++;
 	cd = rv = malloc(sizeof(*rv)*cnt);
-	for (c = c1; c->len; c++)
+	for (c=c1; c->len; c++)
 		*cd++ = *c;
-	for (c = c2; c->len; c++)
+	for (c=c2; c->len; c++)
 		*cd++ = *c;
 	cd->len = 0;
 	free(c1);
@@ -306,47 +283,45 @@ static void printword(struct elmnt e)
 	if (e.start[0])
 		printf("%.*s", e.len, e.start);
 	else {
-		int a, b, c;
+		int a,b,c;
 		sscanf(e.start+1, "%d %d %d", &a, &b, &c);
-		printf("*** %d,%d **** %d\n", b, c, a);
+		printf("*** %d,%d **** %d\n", b,c,a);
 	}
 }
 #endif
 
 /*
- * Reduce a file by discarding less interesting words
+ * reduce a file by discarding less interesting words
  * Words that end with a newline are interesting (so all words
  * in line-mode are interesting) and words that start with
  * and alphanumeric are interesting.  This excludes spaces and
  * special characters in word mode
  * Doing a best-fit comparision on only interesting words is
- * much faster than on all words, and is nearly as good
+ * much fast than on all words, and it nearly as good
  */
 
 static inline int is_skipped(struct elmnt e)
 {
-	return !(ends_line(e) ||
-		 isalnum(e.start[0]) ||
-		 e.start[0] == '_');
+	return !( ends_line(e) ||
+		  isalnum(e.start[0]) ||
+		  e.start[0] == '_');
 }
-
-static struct file reduce(struct file orig)
+struct file reduce(struct file orig)
 {
-	int cnt = 0;
+	int cnt=0;
 	int i;
 	struct file rv;
 
-	for (i = 0; i < orig.elcnt; i++)
+	for (i=0; i<orig.elcnt; i++)
 		if (!is_skipped(orig.list[i]))
 			cnt++;
 
-	if (cnt == orig.elcnt)
-		return orig;
+	if (cnt == orig.elcnt) return orig;
 
 	rv.elcnt = cnt;
 	rv.list = malloc(cnt*sizeof(struct elmnt));
 	cnt = 0;
-	for (i = 0; i < orig.elcnt; i++)
+	for (i=0; i<orig.elcnt; i++)
 		if (!is_skipped(orig.list[i]))
 			rv.list[cnt++] = orig.list[i];
 	return rv;
@@ -358,67 +333,63 @@ static struct file reduce(struct file orig)
  * When we find the location in a2/b2, we expand to include all
  * immediately surrounding words which were skipped
  */
-static void remap(struct best *best, int cnt,
-		  struct file a1, struct file b1,
-		  struct file a2, struct file b2)
+void remap(struct best *best, int cnt,
+	   struct file a1, struct file b1,
+	   struct file a2, struct file b2)
 {
 	int b;
-	int pa, pb; /* pointers into the a2 and b2 arrays */
+	int pa,pb;
+	pa=pb=0;
 
-	pa = pb = 0;
+	if (a1.elcnt == 0 && a2.elcnt == 0) return;
 
-	if (a1.elcnt == 0 && a2.elcnt == 0)
-		return;
-
-	for (b = 1; b < cnt; b++)
-	    if (best[b].val > 0) {
-		while (pa < a2.elcnt &&
+	for (b=1; b<cnt; b++)
+	   if (best[b].val>0) {
+#if 0
+		printf("best %d,%d  %d,%d\n",
+		       best[b].xlo,best[b].ylo,
+		       best[b].xhi,best[b].yhi);
+#endif
+		while (pa<a2.elcnt &&
 		       a2.list[pa].start != a1.list[best[b].xlo].start)
 			pa++;
-		if (pa == a2.elcnt)
-			abort();
-		while (pb < b2.elcnt &&
+		if (pa == a2.elcnt) abort();
+		while (pb<b2.elcnt &&
 		       b2.list[pb].start != b1.list[best[b].ylo].start)
 			pb++;
-		if (pb == b2.elcnt)
-			abort();
+		if (pb == b2.elcnt) abort();
 
 		/* pa,pb is the start of this best bit.  Step
 		 * backward over ignored words
 		 */
-		while (pa > 0 && is_skipped(a2.list[pa-1]))
+		while (pa>0 && is_skipped(a2.list[pa-1]))
 			pa--;
-		while (pb > 0 && is_skipped(b2.list[pb-1]))
+		while (pb>0 && is_skipped(b2.list[pb-1]))
 			pb--;
 
-		if (pa <= 0)
-			pa = 1;
-		if (pb <= 0)
-			pb = 1;
-
+#if 0
+		printf("-> %d,%d\n", pa,pb);
+#endif
 		best[b].xlo = pa;
 		best[b].ylo = pb;
 
-		while (pa < a2.elcnt &&
-		       (pa == 0 || (a2.list[pa-1].start
-				    != a1.list[best[b].xhi-1].start)))
+		while (pa<a2.elcnt &&
+		       a2.list[pa-1].start != a1.list[best[b].xhi-1].start)
 			pa++;
-		if (pa == a2.elcnt && best[b].xhi != a1.elcnt)
-			abort();
-		while (pb < b2.elcnt &&
-		       (pb == 0 || (b2.list[pb-1].start
-				    != b1.list[best[b].yhi-1].start)))
+		if (pa == a2.elcnt && best[b].xhi != a1.elcnt) abort();
+		while (pb<b2.elcnt &&
+		       b2.list[pb-1].start != b1.list[best[b].yhi-1].start)
 			pb++;
-		if (pb == b2.elcnt && best[b].yhi != b1.elcnt)
-			abort();
+		if (pb == b2.elcnt && best[b].yhi != b1.elcnt) abort();
 
-		/* pa,pb is now the end of the best bit.
-		 * Step pa,pb forward over ignored words.
-		 */
-		while (pa < a2.elcnt && is_skipped(a2.list[pa]))
+		/* now step pa,pb forward over ignored words */
+		while (pa<a2.elcnt && is_skipped(a2.list[pa]))
 			pa++;
-		while (pb < b2.elcnt && is_skipped(b2.list[pb]))
+		while (pb<b2.elcnt && is_skipped(b2.list[pb]))
 			pb++;
+#if 0
+		printf("-> %d,%d\n", pa,pb);
+#endif
 		best[b].xhi = pa;
 		best[b].yhi = pb;
 	}
@@ -433,13 +404,11 @@ static void find_best_inorder(struct file *a, struct file *b,
 	 * recurse either side of that
 	 */
 	int i;
-	int bad = 0;
-	int bestval, bestpos = 0;
-
-	for (i = bestlo; i < besthi; i++)
-		best[i].val = 0;
-	find_best(a, b, alo, ahi, blo, bhi, best);
-	for (i = bestlo + 1; i < besthi; i++)
+	int bad=0;
+	int bestval, bestpos=0;
+	for (i=bestlo; i<besthi; i++) best[i].val = 0;
+	find_best(a,b,alo,ahi,blo,bhi,best);
+	for (i=bestlo+1; i<besthi; i++)
 		if (best[i-1].val > 0 &&
 		    best[i].val > 0 &&
 		    best[i-1].xhi >= best[i].xlo)
@@ -448,7 +417,7 @@ static void find_best_inorder(struct file *a, struct file *b,
 	if (!bad)
 		return;
 	bestval = 0;
-	for (i = bestlo; i < besthi; i++)
+	for (i=bestlo; i<besthi; i++)
 		if (best[i].val > bestval) {
 			bestval = best[i].val;
 			bestpos = i;
@@ -456,9 +425,8 @@ static void find_best_inorder(struct file *a, struct file *b,
 	if (bestpos > bestlo) {
 		/* move top down below chunk marker */
 		int y = best[bestpos].ylo;
-		while (b->list[y].start[0])
-			y--;
-		find_best_inorder(a, b,
+		while (b->list[y].start[0]) y--;
+		find_best_inorder(a,b,
 				  alo, best[bestpos].xlo,
 				  blo, y,
 				  best, bestlo, bestpos);
@@ -466,9 +434,8 @@ static void find_best_inorder(struct file *a, struct file *b,
 	if (bestpos < besthi-1) {
 		/* move bottom up to chunk marker */
 		int y = best[bestpos].yhi;
-		while (b->list[y].start[0])
-			y++;
-		find_best_inorder(a, b,
+		while (b->list[y].start[0]) y++;
+		find_best_inorder(a,b,
 				  best[bestpos].xhi, ahi,
 				  y, bhi,
 				  best, bestpos+1, besthi);
@@ -477,6 +444,7 @@ static void find_best_inorder(struct file *a, struct file *b,
 
 struct csl *pdiff(struct file a, struct file b, int chunks)
 {
+	int alo,ahi,blo,bhi;
 	struct csl *csl1, *csl2;
 	struct best *best = malloc(sizeof(struct best)*(chunks+1));
 	int i;
@@ -485,24 +453,51 @@ struct csl *pdiff(struct file a, struct file b, int chunks)
 	asmall = reduce(a);
 	bsmall = reduce(b);
 
-	for (i = 0; i < chunks+1; i++)
+	alo = blo = 0;
+	ahi = asmall.elcnt;
+	bhi = bsmall.elcnt;
+/*	printf("start: %d,%d  %d,%d\n", alo,blo,ahi,bhi); */
+
+	for (i=0; i<chunks+1; i++)
 		best[i].val = 0;
-	find_best_inorder(&asmall, &bsmall,
-			  0, asmall.elcnt, 0, bsmall.elcnt,
-			  best, 1, chunks+1);
-	remap(best, chunks+1, asmall, bsmall, a, b);
+	find_best_inorder(&asmall,&bsmall,
+		  0, asmall.elcnt, 0, bsmall.elcnt,
+		  best, 1, chunks+1);
+#if 0
+/*	for(i=0; i<b.elcnt;i++) { printf("%d: ", i); printword(b.list[i]); }*/
+	for (i=1; i<=chunks; i++) {
+		printf("end: %d,%d  %d,%d\n", best[i].xlo,best[i].ylo,best[i].xhi,best[i].yhi);
+		printf("<"); printword(bsmall.list[best[i].ylo]); printf("><");
+		printword(bsmall.list[best[i].yhi-1]);printf(">\n");
+	}
+#endif
+	remap(best,chunks+1,asmall,bsmall,a,b);
+#if 0
+/*	for(i=0; i<b.elcnt;i++) { printf("%d: ", i); printword(b.list[i]); }*/
+	for (i=1; i<=chunks; i++)
+		printf("end: %d,%d  %d,%d\n", best[i].xlo,best[i].ylo,best[i].xhi,best[i].yhi);
+	printf("small: a %d b %d --- normal: a %d b %d\n", asmall.elcnt, bsmall.elcnt, a.elcnt, b.elcnt);
+#endif
 
 	csl1 = NULL;
-	for (i = 1; i <= chunks; i++)
-		if (best[i].val > 0) {
-			csl2 = diff_partial(a, b,
-					    best[i].xlo, best[i].xhi,
-					    best[i].ylo, best[i].yhi);
-			csl1 = csl_join(csl1, csl2);
+	for (i=1; i<=chunks; i++)
+		if (best[i].val>0) {
+#if 0
+			int j;
+			printf("Before:\n");
+			for (j=best[i].xlo; j<best[i].xhi; j++)
+				printword(a.list[j]);
+			printf("After:\n");
+			for (j=best[i].ylo; j<best[i].yhi; j++)
+				printword(b.list[j]);
+#endif
+			csl2 = diff_partial(a,b,
+					    best[i].xlo,best[i].xhi,
+					    best[i].ylo,best[i].yhi);
+			csl1 = csl_join(csl1,csl2);
 		}
 	if (csl1) {
-		for (csl2 = csl1; csl2->len; csl2++)
-			;
+		for (csl2=csl1; csl2->len; csl2++);
 		csl2->a = a.elcnt;
 		csl2->b = b.elcnt;
 	} else {

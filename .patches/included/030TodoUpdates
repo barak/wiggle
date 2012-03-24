@@ -1,0 +1,38 @@
+Status: ok
+
+Just some TODO updates
+
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./TODO |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff .prev/TODO ./TODO
+--- .prev/TODO	2006-06-13 22:55:25.000000000 +1000
++++ ./TODO	2006-06-13 22:55:34.000000000 +1000
+@@ -185,6 +185,7 @@ DONE - blank after end and before begini
+         incr-search
+         find char pos in search and highlight
+         multiple finds per line
++        search to loop around
+ 	switch from forward to reverse.
+      DONE   page up/down
+      DONE   beginning/end of line
+@@ -192,7 +193,7 @@ DONE - blank after end and before begini
+  - handle single .rej file
+  - allow updates to be saved
+  - allow editing???
+- - better colours?
++ - better colours? configurable?
+ 
+ - extract.c should be able to extract half of a word-diff
+ - extract.c should work on word-merges
+@@ -302,3 +303,6 @@ other things
+         If it does, expand both chunks with common data from the other
+          then run the diff code, then extract the new middle
+ 
++ - move to left in tabs doesn't work right
++ - check out md.c and 383MDBlocked in demo directory
++

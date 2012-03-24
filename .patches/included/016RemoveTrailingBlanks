@@ -1,0 +1,827 @@
+Status: ok
+
+Remove all trailing blanks.
+
+There are quite a few...
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./ReadMe.c        |    2 -
+ ./bestmatch.c     |   14 +++++------
+ ./diff.c          |   16 ++++++-------
+ ./hash.h          |    2 -
+ ./load.c          |    2 -
+ ./merge.c         |   66 +++++++++++++++++++++++++++---------------------------
+ ./merge2.c        |   22 +++++++++---------
+ ./patch_depends.c |   12 ++++-----
+ ./split.c         |    2 -
+ ./vpatch.c        |   32 +++++++++++++-------------
+ ./wiggle.c        |   14 +++++------
+ ./wiggle.h        |    8 +++---
+ 12 files changed, 96 insertions(+), 96 deletions(-)
+
+diff ./ReadMe.c~current~ ./ReadMe.c
+--- ./ReadMe.c~current~	2006-05-25 21:06:03.000000000 +1000
++++ ./ReadMe.c	2006-05-29 20:43:59.000000000 +1000
+@@ -38,7 +38,7 @@ char Version[] = "wiggle - v0.6 - 20 May
+ char short_options1[]="xdmwlrh123pVRvqB"; /* not mode B */
+ char short_options2[]="xdmwlrh123p:VRvqB"; /* mode B */
+ 
+-       
++
+ struct option long_options[] = {
+ 	{"browse",	0, 0, 'B'},
+ 	{"extract",	0, 0, 'x'},
+
+diff ./bestmatch.c~current~ ./bestmatch.c
+--- ./bestmatch.c~current~	2006-02-10 12:58:18.000000000 +1100
++++ ./bestmatch.c	2006-05-29 20:43:59.000000000 +1000
+@@ -84,7 +84,7 @@ struct v {
+  * We would like symetry in our answers so that a good sequence with an out-rider on
+  * one end is evaluated the same as a good sequence with an out-rider on the other end.
+  * However to do this we cannot really use value of the good sequence to weigh in the
+- * outriders favour as in the case of a leading outrider, we do not yet know the value of 
++ * outriders favour as in the case of a leading outrider, we do not yet know the value of
+  * of the good sequence.
+  * First, we need an arbitrary number, X, to say "Given a single symbol, after X errors, we
+  * forget that symbol".  5 seems a good number.
+@@ -231,8 +231,8 @@ void find_best(struct file *a, struct fi
+ #endif
+ 			v[klo].val = 0;
+ 		}
+-		while (klo+2 < (ahi-bhi) && 
+-		       (y > bhi || 
++		while (klo+2 < (ahi-bhi) &&
++		       (y > bhi ||
+ 			(best_val(&v[klo], min(ahi-x,bhi-y)) < best[v[klo].c].val &&
+ 			 best_val(&v[klo+1], min(ahi-x,bhi-y+1)) < best[v[klo+1].c].val
+ 				)
+@@ -299,7 +299,7 @@ static void printword(struct elmnt e)
+  * reduce a file by discarding less interesting words
+  * Words that end with a newline are interesting (so all words
+  * in line-mode are interesting) and words that start with
+- * and alphanumeric are interesting.  This excludes spaces and 
++ * and alphanumeric are interesting.  This excludes spaces and
+  * special characters in word mode
+  * Doing a best-fit comparision on only interesting words is
+  * much fast than on all words, and it nearly as good
+@@ -307,7 +307,7 @@ static void printword(struct elmnt e)
+ 
+ static inline int is_skipped(struct elmnt e)
+ {
+-	return !( ends_line(e) || 
++	return !( ends_line(e) ||
+ 		  isalnum(e.start[0]) ||
+ 		  e.start[0] == '_');
+ }
+@@ -365,7 +365,7 @@ void remap(struct best *best, int cnt,
+ 		if (pb == b2.elcnt) abort();
+ 
+ 		/* pa,pb is the start of this best bit.  Step
+-		 * backward over ignored words 
++		 * backward over ignored words
+ 		 */
+ 		while (pa>0 && is_skipped(a2.list[pa-1]))
+ 			pa--;
+@@ -465,7 +465,7 @@ struct csl *pdiff(struct file a, struct 
+ 
+ 	for (i=0; i<chunks+1; i++)
+ 		best[i].val = 0;
+-	find_best_inorder(&asmall,&bsmall, 
++	find_best_inorder(&asmall,&bsmall,
+ 		  0, asmall.elcnt, 0, bsmall.elcnt,
+ 		  best, 1, chunks+1);
+ #if 0
+
+diff ./diff.c~current~ ./diff.c
+--- ./diff.c~current~	2006-05-29 20:43:35.000000000 +1000
++++ ./diff.c	2006-05-29 20:43:59.000000000 +1000
+@@ -60,7 +60,7 @@ struct v {
+ 
+ static int find_common(struct file *a, struct file *b,
+ 		       int *alop, int *ahip,
+-		       int *blop, int *bhip, 
++		       int *blop, int *bhip,
+ 		       int mid,
+ 		       struct v *v)
+ {
+@@ -73,7 +73,7 @@ static int find_common(struct file *a, s
+ 	 * v is scratch space each is indexable from
+ 	 * alo-bhi to ahi-blo inclusive
+ 	 */
+-		
++
+ 	int klo, khi;
+ 	int k;
+ 	int alo = *alop;
+@@ -108,7 +108,7 @@ static int find_common(struct file *a, s
+ 			vnew.l += snake;
+ 			dist = (ahi-x)+(bhi-y);
+ 			if (dist < best) best = dist;
+-			if (x+y >= mid && 
++			if (x+y >= mid &&
+ 			    v[k].x+v[k].x-k <= mid) {
+ 				vnew.md = k;
+ 			}
+@@ -165,7 +165,7 @@ static int find_common(struct file *a, s
+ 			v[khi+1] = v[khi];
+ 			v[khi+1].x++;
+ 			khi ++;
+-		} else 
++		} else
+ 			while (dist > best) {
+ 				khi --;
+ 				x = v[khi].x+1; y = x - (khi+1);
+@@ -187,7 +187,7 @@ static struct csl *lcsl(struct file *a, 
+ 	struct csl *rv = NULL;
+ 	int k;
+ 
+-	if (ahi <= alo || bhi <= blo) 
++	if (ahi <= alo || bhi <= blo)
+ 		return csl;
+ 
+ 
+@@ -205,7 +205,7 @@ static struct csl *lcsl(struct file *a, 
+ 		csl->len = 0;
+ 	}
+ 	if (len) {
+-		csl = lcsl(a,alo,alo1,	
++		csl = lcsl(a,alo,alo1,
+ 			   b,blo,blo1,
+ 			   csl, v);
+ 
+@@ -245,7 +245,7 @@ static struct csl *lcsl(struct file *a, 
+ 
+ /* if two common sequences are separated by only an add or remove,
+  * and the first common ends the same as the middle text,
+- * extend the second and contract the first in the hope that the 
++ * extend the second and contract the first in the hope that the
+  * first might become empty.  This ameliorates against the greedyness
+  * of the 'diff' algorithm.
+  * Once this is done, repeat the process but extend the first
+@@ -335,7 +335,7 @@ struct csl *diff(struct file a, struct f
+ 	return csl;
+ }
+ 
+-struct csl *diff_partial(struct file a, struct file b, 
++struct csl *diff_partial(struct file a, struct file b,
+ 			 int alo, int ahi, int blo, int bhi)
+ {
+ 	struct v *v;
+
+diff ./hash.h~current~ ./hash.h
+--- ./hash.h~current~	2006-05-29 20:43:35.000000000 +1000
++++ ./hash.h	2006-05-29 20:43:59.000000000 +1000
+@@ -48,7 +48,7 @@ static inline unsigned long hash_long(un
+ 	/* High bits are more random, so use them. */
+ 	return hash >> (BITS_PER_LONG - bits);
+ }
+-	
++
+ static inline unsigned long hash_ptr(void *ptr, unsigned int bits)
+ {
+ 	return hash_long((unsigned long)ptr, bits);
+
+diff ./load.c~current~ ./load.c
+--- ./load.c~current~	2006-05-29 20:43:35.000000000 +1000
++++ ./load.c	2006-05-29 20:43:59.000000000 +1000
+@@ -76,7 +76,7 @@ static struct stream load_regular(int fd
+ 	struct stat stb;
+ 	struct stream s;
+ 	fstat(fd, &stb);
+-	
++
+ 	s.len = stb.st_size;
+ 	s.body = malloc(s.len);
+ 	if (s.body) {
+
+diff ./merge.c~current~ ./merge.c
+--- ./merge.c~current~	2006-05-25 09:44:23.000000000 +1000
++++ ./merge.c	2006-05-29 20:43:59.000000000 +1000
+@@ -59,14 +59,14 @@
+  * We have a concept of a 'point'
+  * The start and end of the file are each points.
+  * Also the start and end of any conflict is a point.
+- * Outside of a conflict, we can move points forwards or backwards 
++ * Outside of a conflict, we can move points forwards or backwards
+  * through the merger.  Inside a conflict movement is not well defined.
+  * Any point is 'forward looking' or 'backward looking'.
+  * A forward looking point can be moved forward but not backward.
+  * A backward looking point can be moved backward, not forward.
+  *
+  * If a forward looking point is a tri-point, in a double-coincidence,
+- * then c1/c2 will be set to the furthest forward double coincidence that is before 
++ * then c1/c2 will be set to the furthest forward double coincidence that is before
+  * or contains the point, thus it well-defines the start of a double coincidence
+  * or that end of a conflict.
+  * inversely, a BL point well-defines the end of a DC or start of a conflict.
+@@ -74,7 +74,7 @@
+  * The start of a conflict is a backward looking point.
+  * The end of a conflict is a forward looking point.
+  *
+- * In normal (Word/line) mode, we move the boundaries of a conflict out 
++ * In normal (Word/line) mode, we move the boundaries of a conflict out
+  * until they are at end-of-line.
+  * When moving forward, this is until we cross over a newline word.
+  * When moving backward, this is until one step before crossing over
+@@ -83,9 +83,9 @@
+  * Away from a conflict, every point can be clearly defined as a
+  * location either in A or in C.  The 'point' is immediately before
+  * the word at that location.
+- * At the end of a conflict, this is still well defined as the 'next word' 
++ * At the end of a conflict, this is still well defined as the 'next word'
+  * is outside a conflict.
+- * At the start of a conflict this may not be well defined as there may not 
++ * At the start of a conflict this may not be well defined as there may not
+  * be a clear 'next' word.  We choose the point the would be reached by
+  * the step-forward algorithm so that it is easy to test if at start-of-conflict.
+  *
+@@ -94,8 +94,8 @@
+  * 3 texts.  To allow for conflicts at start and end of file, we consider the
+  * start and end of the three texts to each be double co-incidences.
+  *
+- * Each double co-incidence has a start and an end.  When we find a conflict, it 
+- * is taken to extend from the end of the previous double coincidence to the 
++ * Each double co-incidence has a start and an end.  When we find a conflict, it
++ * is taken to extend from the end of the previous double coincidence to the
+  * start of the next double co-incidence.
+  * Between conflicts we can mergers which can be printed simply be advancing the start
+  * point and printing each word as we go.
+@@ -133,7 +133,7 @@
+  *      slide down to a, increment c1 and advance c2, then repeat.
+  *
+  * To retreat a backward facing point
+- *   if in_a and at end of c1 and c1!=-1, 
++ *   if in_a and at end of c1 and c1!=-1,
+  *      slide up to c and if at start of c2, retreat c2, thenc 1, and repeat
+  *   if in_c and within c2 and corresponding a at start of c1
+  *      slide down to a, decrement c1 and retreat c2, then repeat.
+@@ -142,14 +142,14 @@
+  * We never actually compare points for ordering.  We should 'know' the likely order
+  * and only compare equal or not.  This can be tested independant of direction,
+  * and done by simply comparing in_a and pos.
+- */ 
++ */
+ 
+ 
+ /* Each point involves a location in each of A, B, and C.
+  * There is a conflict for each change in B-C where the B section
+  * is not wholey contained in an A-B co-incidence.
+  * The start point of a conflict is determined as:
+- *   C is the end of the C side of the  previous B-C coincidence (or 
++ *   C is the end of the C side of the  previous B-C coincidence (or
+  *       start of file
+  *   B is the end of the B side of the matching A-B coincidence if
+  *       the point is in an A-B coincidence, or the end of the previous
+@@ -158,7 +158,7 @@
+  *      a B-C coincidence, C is moved backwards too.
+  *   A is the matching point to B in the A-B coincidence that B is in.
+  *
+- * The end point of a conflict is determined in a similar way, 
++ * The end point of a conflict is determined in a similar way,
+  * except that B is in a coincidence that is at, or *follows* the
+  * end of the next B-C coincidence.
+  *
+@@ -186,7 +186,7 @@
+  *
+  * At the start of the file c1 and c2 will be the firsts match in A-B and B-C
+  * If [c1]->a is 0, then !in_a and pos is [c2]->b+x where x is
+- * chosen such that [c1]->b == [c2]->a+x and x < [c2]->len.  If such choice 
++ * chosen such that [c1]->b == [c2]->a+x and x < [c2]->len.  If such choice
+  * is not possible, there is a conflict at the start of the file and so we choose
+  * a point as if [c1]->a were not 0.
+  *
+@@ -226,7 +226,7 @@ static int tripoint(struct point *here,
+ 			*c = 0;
+ 		} else if (c2->a <= *b && c2->a + c2->len >= *b)
+ 			*c = c2->b + *b - c2->a;
+-		else 
++		else
+ 			return 0;
+ 	} else {
+ 		*c = here->pos;
+@@ -236,7 +236,7 @@ static int tripoint(struct point *here,
+ 			*b = 0;
+ 		} else if (c2->b <= *c && c2->b +c2->len >= *c)
+ 			*b = c2->a + *c - c2->b;
+-		else	
++		else
+ 			return 0;
+ 
+ 
+@@ -262,7 +262,7 @@ static int retreat(struct csl *c1, struc
+ 		a = p->pos;
+ 		while ((p->c1 == 0 && a == 0) ||
+ 		       (p->c1 > 0 && c1[p->c1-1].a + c1[p->c1-1].len >= a)) {
+-			if (!slid) 
++			if (!slid)
+ 				if ( a >= c1[p->c1].a)
+ 					break;
+ 			p->c1--;
+@@ -426,7 +426,7 @@ static int advance(struct csl *c1, struc
+ 			 * if we've slid, make sure not to skip over
+ 			 * the stuff in c2.
+ 			 */
+-			if(slid && p->c2 != -1 && c2[p->c2].a == b && 
++			if(slid && p->c2 != -1 && c2[p->c2].a == b &&
+ 			   c2[p->c2].b > c2[p->c2].a) {
+ 				c -= c2[p->c2].b - c2[p->c2].a;
+ 			}
+@@ -440,7 +440,7 @@ static int advance(struct csl *c1, struc
+ 		c = p->pos;
+ 		while ((p->c2 == -1 || c2[p->c2].len) &&
+ 		       c2[p->c2+1].b <= c) {
+-			if (!slid) 
++			if (!slid)
+ 				if ((p->c2 == -1 && c == 0) ||
+ 				    (p->c2 >= 0 && c <= c2[p->c2].b+c2[p->c2].len))
+ 					break;
+@@ -468,7 +468,7 @@ static int advance(struct csl *c1, struc
+ 
+ 		a = c1[p->c1].a + b - c1[p->c1].b;
+ 
+-		/* ok, this is the furthest forward double coincidence 
++		/* ok, this is the furthest forward double coincidence
+ 		 * If it is the end of an A-B coincidence but not EOF,
+ 		 * slide down to A
+ 		 */
+@@ -489,7 +489,7 @@ static int advance(struct csl *c1, struc
+ 	return 1;
+ }
+ 
+-static int point_crossed(struct point first, struct point second, 
++static int point_crossed(struct point first, struct point second,
+ 		      struct csl *cs1, struct csl *cs2)
+ {
+ 	int a1,b1,c1;
+@@ -530,13 +530,13 @@ static void print_merger(FILE *out, stru
+ 
+ static int inline at_sol(struct file *f, int i)
+ {
+-	return i == 0 || i == f->elcnt || 
++	return i == 0 || i == f->elcnt ||
+ 		ends_line(f->list[i-1]);
+ }
+ 
+ static void print_range(FILE *out, struct file *f, int start, int end)
+ {
+-	for (; start < end ; start++) 
++	for (; start < end ; start++)
+ 		printword(out, f->list[start]);
+ }
+ 
+@@ -557,7 +557,7 @@ static int print_conflict(FILE *out, str
+ 		abort();
+ 	if (!tripoint(&end,   c1,c2, &aend,   &bend,   &cend))
+ 		abort();
+-	
++
+ 
+ 	/* Now contract the conflict if possible, but insist on
+ 	 * an end-of-line boundary unless 'words'.
+@@ -621,14 +621,14 @@ static int end_of_file(struct point p, s
+ 	return advance(c1,c2,&p)==0;
+ }
+ 
+-static int next_conflict(struct point here, struct csl *start_c1, struct csl *start_c2, 
+-			 struct point *start, struct point *end, 
++static int next_conflict(struct point here, struct csl *start_c1, struct csl *start_c2,
++			 struct point *start, struct point *end,
+ 			 struct file *a, struct file *b, struct file *c)
+ {
+ 	/* We want to find the start and end of the 'next' conflict.
+ 	 * There may not be another conflict, in which case set start and
+ 	 * end to the end of the files.
+-	 * The start and end of a conflict must be the end and start of 
++	 * The start and end of a conflict must be the end and start of
+ 	 * regions where A matches B and B matches C - except for
+ 	 * The start which might be the start of the file.
+ 	 * 'here' is a potentially valid starting point. Any other starting
+@@ -652,7 +652,7 @@ static int next_conflict(struct point he
+ 	 * If we step c2 forward and the new coincidence is beyond or at the
+ 	 * end of c1, or we step forward c1 and it's start is beyond or at the end of c2,
+ 	 * then that is a conflict.
+-	 * Also, we can detect a conflict at start-of-file (here.in_a, here.pos==0) if 
++	 * Also, we can detect a conflict at start-of-file (here.in_a, here.pos==0) if
+ 	 * c2 doesn't start at 0.
+ 	 *
+ 	 * 'here' is significant only for its c1/c2 values. They will contain a
+@@ -666,7 +666,7 @@ static int next_conflict(struct point he
+ 	struct csl *c1 = start_c1;
+ 	struct csl *c2 = start_c2;
+ 
+-	
++
+ 	c1 += here.c1;
+ 	c2 += here.c2;
+ 
+@@ -692,9 +692,9 @@ static int next_conflict(struct point he
+ 				conflict_found = 1;
+ 		} else if (c1->b+c1->len == c2->a+c2->len) {
+ 			/* both coincidences end at same place. There is
+-			 * a conflict if there is a gap in c1->b or 
++			 * a conflict if there is a gap in c1->b or
+ 			 * c2->a has no gap but c2->b does (implying insertion
+-			 * at undefined location 
++			 * at undefined location
+ 			 */
+ 			if (c1->len && c2->len) {
+ 				if (c1[1].b > c1->b + c1->len ||
+@@ -703,7 +703,7 @@ static int next_conflict(struct point he
+ 					conflict_found = 1;
+ 			}
+ 			if (c1->len)
+-				c1++; 
++				c1++;
+ 			if (c2->len)
+ 				c2++;
+ 		} else if (c2->len ==0 || (c1->len && c1->b+c1->len < c2->a+c2->len)) {
+@@ -730,7 +730,7 @@ static int next_conflict(struct point he
+ 			) {
+ 			/* double coincidence !
+ 			 * It starts at max of c1->b and c2->a, in c
+-			 * and ends at min of c1->b+len (in a), c2->a+len (in c) 
++			 * and ends at min of c1->b+len (in a), c2->a+len (in c)
+ 			 */
+ 			end->c1 = c1-start_c1;
+ 			end->c2 = c2-start_c2;
+@@ -780,7 +780,7 @@ static int next_conflict(struct point he
+ 				 */
+ 				start->in_a = end->in_a = 0;
+ 				start->pos = end->pos = c2->b;
+-				return 0; 
++				return 0;
+ 			}
+ 		}
+ 	}
+@@ -816,7 +816,7 @@ static int Startofline(struct point p, s
+ 		       struct file *a, struct file *b, struct file *c)
+ {
+ 	int a1,b1,c1;
+-	return 
++	return
+ 		tripoint(&p,cs1,cs2,&a1,&b1,&c1) &&
+ 		at_sol(a,a1) && at_sol(b,b1) && at_sol(c,c1);
+ 
+
+diff ./merge2.c~current~ ./merge2.c
+--- ./merge2.c~current~	2006-05-25 20:59:47.000000000 +1000
++++ ./merge2.c	2006-05-29 20:43:59.000000000 +1000
+@@ -43,7 +43,7 @@
+  * the conflicts match the csl lists.
+  *
+  * This can all be achieved with a list of (a,b,c,c1,c1) 5-tuples.
+- * If two consecutive differ in more than one of a,b,c, it is a 
++ * If two consecutive differ in more than one of a,b,c, it is a
+  * conflict.
+  * If only 'a' differ, it is un-matched original.
+  * If only 'b' differ, it is matched, unchanged original
+@@ -89,7 +89,7 @@ inline int isolate_conflicts(struct file
+ {
+ 	/* A conflict indicates that something is definitely wrong
+ 	 * and so we need to be a bit suspicious of nearby apparent matches.
+-	 * To display a conflict effectively we expands it's effect to 
++	 * To display a conflict effectively we expands it's effect to
+ 	 * include any Extraneous, Unmatched or Changed text.
+ 	 * Also, unless 'words', we need to include any partial lines
+ 	 * in the Unchanged text that forms the border of a conflict.
+@@ -105,13 +105,13 @@ inline int isolate_conflicts(struct file
+ 	int i,j,k;
+ 	int cnt = 0;
+ 
+-	for (i=0; m[i].type != End; i++) 
++	for (i=0; m[i].type != End; i++)
+ 		if (m[i].type == Conflict) {
+ 			/* We have a conflict here.
+ 			 * First search backwards for an Unchanged marking
+-			 * things as in_conflict.  Then find the 
+-			 * cut-point in the Unchanged.  If there isn't one, 
+-			 * keep looking. 
++			 * things as in_conflict.  Then find the
++			 * cut-point in the Unchanged.  If there isn't one,
++			 * keep looking.
+ 			 *
+ 			 * Then search forward doing the same thing.
+ 			 */
+@@ -274,7 +274,7 @@ struct ci make_merger(struct file af, st
+ 				 */
+ 				rv.merger[i].type = Extraneous;
+ 				rv.merger[i].al = 0;
+-				rv.merger[i].cl = 
++				rv.merger[i].cl =
+ 					rv.merger[i].bl =
+ 					min(csl1[c1].b - b,
+ 					    csl2[c2].len - (b-csl2[c2].a));
+@@ -293,7 +293,7 @@ struct ci make_merger(struct file af, st
+ 			 * if 'c' is currently at a suitable cut-point, then
+ 			 * we can look for a triple-cut-point for start.
+ 			 * Also, if csl2[c2].b isn't in a conflict, and is
+-			 * a suitable cut-point, then we could make a 
++			 * a suitable cut-point, then we could make a
+ 			 * triple-cut-point for end of a conflict.
+ 			 */
+ 
+@@ -302,16 +302,16 @@ struct ci make_merger(struct file af, st
+ 			rv.merger[i].al = rv.merger[i].bl;
+ 			rv.merger[i].cl = csl2[c2].b - c;
+ 		} else if (match1 && match2) {
+-			/* Some unchanged text 
++			/* Some unchanged text
+ 			 */
+ 			rv.merger[i].type = Unchanged;
+-			rv.merger[i].bl = 
++			rv.merger[i].bl =
+ 				min(csl1[c1].len - (b-csl1[c1].b),
+ 				    csl2[c2].len - (b-csl2[c2].a));
+ 			rv.merger[i].al = rv.merger[i].cl =
+ 				rv.merger[i].bl;
+ 		} else {
+-			/* must be a conflict. 
++			/* must be a conflict.
+ 			 * Move a and c to next match, and b to closest of the two
+ 			 */
+ 			rv.merger[i].type = Conflict;
+
+diff ./patch_depends.c~current~ ./patch_depends.c
+--- ./patch_depends.c~current~	2006-05-29 20:43:35.000000000 +1000
++++ ./patch_depends.c	2006-05-29 20:43:59.000000000 +1000
+@@ -2,16 +2,16 @@
+ /*
+  * Given a list of files containing patches, we determine any dependancy
+  * relationship between them.
+- * If a chunk in one file overlaps a chunk in a previous file then the one 
++ * If a chunk in one file overlaps a chunk in a previous file then the one
+  * depends on the other.
+- * 
++ *
+  * Each patch contains a list of chunks that apply to a file. Each
+  * chunk has an original start/end and a new start/end.
+  *
+- * Each target file links to  a list of chunks, each of which points to it's 
++ * Each target file links to  a list of chunks, each of which points to it's
+  * patch file. The chunks are sorted by new start
+  *
+- * When we add a chunk which changes size, we update the new start/end of all 
++ * When we add a chunk which changes size, we update the new start/end of all
+  * previous chunks in that file which end after this one starts.
+  *
+  */
+@@ -47,7 +47,7 @@ void report(void)
+ 
+ 	for (p= patches; p ; p=p->next) {
+ 		printf("%s :", p->name);
+-		for (c=0 ; c < p->cnt ; c++) 
++		for (c=0 ; c < p->cnt ; c++)
+ 			printf(" %s", p->depends[c]);
+ 		printf("\n");
+ 	}
+@@ -66,7 +66,7 @@ int check_depends(struct patch *new, str
+ 
+ void add_depends(struct patch *new, struct patch *old)
+ {
+-	/* patch new depends on patch old, but this hasn't 
++	/* patch new depends on patch old, but this hasn't
+ 	 * been recorded yet
+ 	 */
+ 	int size = InitDepends;
+
+diff ./split.c~current~ ./split.c
+--- ./split.c~current~	2006-05-29 20:43:35.000000000 +1000
++++ ./split.c	2006-05-29 20:43:59.000000000 +1000
+@@ -39,7 +39,7 @@
+  *    or single char.
+  *
+  * A line is any string that ends with \n
+- * 
++ *
+  * As a special case to allow proper aligning of multiple chunks
+  * in a patch, a word starting \0 will include 5 chars and a newline
+  *
+
+diff ./vpatch.c~current~ ./vpatch.c
+--- ./vpatch.c~current~	2006-05-28 19:37:40.000000000 +1000
++++ ./vpatch.c	2006-05-29 20:43:59.000000000 +1000
+@@ -38,7 +38,7 @@
+  *    - untouched are pale  A_DIM
+  *    - matched/remaining are regular A_NORMAL
+  *    - matched/removed are red/underlined A_UNDERLINE
+- *    - unmatched in file are A_STANDOUT 
++ *    - unmatched in file are A_STANDOUT
+  *    - unmatched in patch are A_STANDOUT|A_UNDERLINE ???
+  *    - inserted are inverse/green ?? A_REVERSE
+  *
+@@ -71,7 +71,7 @@ struct plist {
+ 	int calced;
+ };
+ 
+-struct plist *patch_add_file(struct plist *pl, int *np, char *file, 
++struct plist *patch_add_file(struct plist *pl, int *np, char *file,
+ 	       unsigned int start, unsigned int end)
+ {
+ 	/* size of pl is 0, 16, n^2 */
+@@ -285,7 +285,7 @@ struct plist *sort_patches(struct plist 
+ 	qsort(pl, *np, sizeof(struct plist), pl_cmp);
+ 	curr[0] = 0;
+ 	n = *np;
+-	for (i=0; i<n; i++) 
++	for (i=0; i<n; i++)
+ 		pl = add_dir(pl, np, pl[i].file, curr);
+ 
+ 	qsort(pl, *np, sizeof(struct plist), pl_cmp);
+@@ -381,9 +381,9 @@ int get_next(int pos, struct plist *pl, 
+ 	if (pl[pos].open) {
+ 		if (pos +1 < n)
+ 			return pos+1;
+-		else 
++		else
+ 			return -1;
+-	} 
++	}
+ 	while (pos >= 0 && pl[pos].next == -1)
+ 		pos = pl[pos].parent;
+ 	if (pos >= 0)
+@@ -603,7 +603,7 @@ void prev_pos(struct pos *pos, int mode,
+ 		}
+ 		*pos = tpos;
+ 		if (e.start[0] == 0) return;
+-		
++
+ 	}
+ }
+ 
+@@ -629,7 +629,7 @@ void next_pos(struct pos *pos, int mode,
+ 	}
+ }
+ 
+-void draw_line(int i, struct pos pos, int mode, 
++void draw_line(int i, struct pos pos, int mode,
+ 	       struct file f1, struct file f2, struct csl *csl, int start, int len)
+ {
+ 	int col = 0;
+@@ -971,7 +971,7 @@ int visible(int mode, enum mergetype typ
+ 		    (mode & (RESULT|AFTER)))
+ 			return a_added;
+ 		break;
+-	case Conflict: 
++	case Conflict:
+ 		switch(stream) {
+ 		case 0:
+ 			if (mode & (ORIG|RESULT))
+@@ -1030,7 +1030,7 @@ void prev_mline(struct mpos *pos, struct
+ 		return;
+ 	while(1) {
+ 		struct elmnt e = prev_melmnt(pos, fm,fb,fa,m);
+-		if (e.start == NULL || 
++		if (e.start == NULL ||
+ 		    (ends_mline(e) && visible(mode, m[pos->m].type, pos->s) >= 0))
+ 			return;
+ 	}
+@@ -1099,7 +1099,7 @@ void draw_mside(int mode, int row, int o
+ 		unsigned char *c;
+ 		int l;
+ 		e = next_melmnt(&pos, fm,fb,fa,m);
+-		if (e.start == NULL || 
++		if (e.start == NULL ||
+ 		    (ends_mline(e) && visible(mode, m[pos.m].type, pos.s) != -1)) {
+ 			if (col < start) col = start;
+ 			if (e.start && e.start[0] == 0) {
+@@ -1140,9 +1140,9 @@ void draw_mside(int mode, int row, int o
+ 	}
+ }
+ 
+-void draw_mline(int row, struct mpos pos, 
++void draw_mline(int row, struct mpos pos,
+ 		struct file fm, struct file fb, struct file fa,
+-		struct merge *m, 
++		struct merge *m,
+ 		int start, int cols, int mode)
+ {
+ 	/*
+@@ -1419,7 +1419,7 @@ void main_window(struct plist *pl, int n
+ 	 * screen line it is on.  We try to keep things stable while
+ 	 * moving.
+ 	 *
+-	 * Counts are printed before the name using at most 2 digits. 
++	 * Counts are printed before the name using at most 2 digits.
+ 	 * Numbers greater than 99 are XX
+ 	 * Ch Wi Co File
+ 	 * 27 5   1 drivers/md/md.c
+@@ -1434,7 +1434,7 @@ void main_window(struct plist *pl, int n
+ 	 *      Move to previous open object
+ 	 *  down: j, n, control-n, downarrow
+ 	 *      Move to next open object
+-	 *  
++	 *
+ 	 */
+ 	int pos=0; /* position in file */
+ 	int row=1; /* position on screen */
+@@ -1627,9 +1627,9 @@ int vpatch(int argc, char *argv[], int s
+ }
+ #if 0
+  WiggleVerbose=1 ~/work/wiggle/wiggle -mR fs/nfsd/nfs4callback.c .patches/removed/144NfsdV4-033 |less
+-neilb@notabene:/home/src/mm$ 
++neilb@notabene:/home/src/mm$
+ 
+-~/work/wiggle/wiggle -BR .patches/removed/144NfsdV4-033 
++~/work/wiggle/wiggle -BR .patches/removed/144NfsdV4-033
+ 
+ 
+ #endif
+
+diff ./wiggle.c~current~ ./wiggle.c
+--- ./wiggle.c~current~	2006-05-25 21:05:41.000000000 +1000
++++ ./wiggle.c	2006-05-29 20:43:59.000000000 +1000
+@@ -62,7 +62,7 @@
+  *    part of the patch or merge to extract.
+  *
+  * Difference calculate and merging is performed on lines (-l) or words (-w).
+- * In the case of -w, an initial diff is computed based on non-trivial words. 
++ * In the case of -w, an initial diff is computed based on non-trivial words.
+  *  i.e. spaces are ignored
+  * This diff is computed from the ends of the file and is used to find a suitable
+  * starting point and range.  Then a more precise diff is computed over that
+@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
+ 	switch(mode) {
+ 	case 'x':
+ 		/* extract a branch of a diff or diff3 or merge output
+-		 * We need one file 
++		 * We need one file
+ 		 */
+ 		if (optind == argc) {
+ 			fprintf(stderr, "wiggle: no file given for --extract\n");
+@@ -463,7 +463,7 @@ int main(int argc, char *argv[])
+ 								}
+ 							}
+ 						} else printf("|");
+-					} 
++					}
+ 					if (!sol) {
+ 						printf("<<<--");
+ 						do {
+@@ -495,7 +495,7 @@ int main(int argc, char *argv[])
+ 								}
+ 							}
+ 						} else printf("|");
+-					} 
++					}
+ 					if (!sol) {
+ 						printf("<<<++");
+ 						do {
+@@ -528,7 +528,7 @@ int main(int argc, char *argv[])
+ 								printsep(fl[0].list[a], fl[1].list[b]);
+ 								a++; b++;
+ 							}
+-						} 
++						}
+ 						else printf("|");
+ 					}
+ 					if (!sol) {
+@@ -621,7 +621,7 @@ int main(int argc, char *argv[])
+ 			outfile = fdopen(fd, "w");
+ 
+ 		}
+-			
++
+ 		if (obj == 'l') {
+ 			fl[0] = split_stream(flist[0], ByLine, 0);
+ 			fl[1] = split_stream(flist[1], ByLine, 0);
+@@ -645,7 +645,7 @@ int main(int argc, char *argv[])
+ 		{
+ 			struct ci ci;
+ 
+-			ci = print_merge2(outfile, &fl[0], &fl[1], &fl[2], 
++			ci = print_merge2(outfile, &fl[0], &fl[1], &fl[2],
+ 						   csl1, csl2, obj=='w');
+ 			if (!quiet && ci.conflicts)
+ 				fprintf(stderr, "%d unresolved conflict%s found\n", ci.conflicts, ci.conflicts==1?"":"s");
+
+diff ./wiggle.h~current~ ./wiggle.h
+--- ./wiggle.h~current~	2006-05-25 20:59:51.000000000 +1000
++++ ./wiggle.h	2006-05-29 20:43:59.000000000 +1000
+@@ -95,7 +95,7 @@ struct merge {
+ 	int a,b,c; /* start of ranges */
+ 	int al, bl, cl; /* length of ranges */
+ 	int c1, c2; /* this or next commonsequence */
+-	int in_conflict; 
++	int in_conflict;
+ 	int lo,hi; /* region of an Unchanged that is not involved in a conflict
+ 		    * These are distances from start of the section, not
+ 		    * indexes into any file
+@@ -108,13 +108,13 @@ extern int split_merge(struct stream, st
+ extern struct file split_stream(struct stream s, int type, int reverse);
+ extern struct csl *pdiff(struct file a, struct file b, int chunks);
+ extern struct csl *diff(struct file a, struct file b);
+-extern struct csl *diff_partial(struct file a, struct file b, 
++extern struct csl *diff_partial(struct file a, struct file b,
+ 				int alo, int ahi, int blo, int bhi);
+ extern struct csl *worddiff(struct stream f1, struct stream f2,
+ 			    struct file *fl1p, struct file *fl2p);
+ 
+-struct ci { 
+-	int conflicts, wiggles, ignored; 
++struct ci {
++	int conflicts, wiggles, ignored;
+ 	struct merge *merger;
+ };
+ extern struct ci print_merge(FILE *out, struct file *a, struct file *b, struct file *c,

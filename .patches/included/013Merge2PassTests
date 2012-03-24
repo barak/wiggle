@@ -1,0 +1,498 @@
+Status: ok
+
+Get merge2 to pass all the tests...
+
+Some of this done by changing tests...
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./merge2.c                          |  112 +++++++++++++++++++++++++++---------
+ ./tests/linux/idmap.h/merge         |   18 +++++
+ ./tests/linux/md-resync/merge       |   57 ++++++++----------
+ ./tests/linux/md/lmerge             |    6 -
+ ./tests/linux/md/merge              |    6 -
+ ./tests/linux/md/wmerge             |    4 -
+ ./tests/linux/raid5build/merge      |    4 +
+ ./tests/linux/raid5line/lmerge      |    2 
+ ./tests/linux/raid5line/merge       |    2 
+ ./tests/linux/raid5line/wmerge      |    4 -
+ ./tests/linux/rpc_tcp_nonagle/merge |    2 
+ ./wiggle.h                          |   25 +++++++-
+ 12 files changed, 167 insertions(+), 75 deletions(-)
+
+diff ./merge2.c~current~ ./merge2.c
+--- ./merge2.c~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./merge2.c	2006-05-25 20:59:47.000000000 +1000
+@@ -94,6 +94,13 @@ inline int isolate_conflicts(struct file
+ 	 * Also, unless 'words', we need to include any partial lines
+ 	 * in the Unchanged text that forms the border of a conflict.
+ 	 *
++	 * A Changed text may also border a conflict, but it can
++	 * only border one conflict (where as an Unchanged can border
++	 * a preceeding and a following conflict).
++	 * The 'new' section of a Changed text appears in the
++	 * conflict as does any part of the original before
++	 * a newline.
++	 *
+ 	 */
+ 	int i,j,k;
+ 	int cnt = 0;
+@@ -115,7 +122,14 @@ inline int isolate_conflicts(struct file
+ 				if (!m[j].in_conflict) {
+ 					m[j].in_conflict = 1;
+ 					m[j].lo = 0;
++				} else if (m[j].type == Changed) {
++					/* This can no longer form a border */
++					m[j].lo = 0; m[j].hi = -1;
++					/* We merge these conflicts and stop searching */
++					cnt--;
++					break;
+ 				}
++
+ 				if (m[j].type == Unchanged || m[j].type == Changed) {
+ 					if (words) {
+ 						m[j].hi = m[j].al;
+@@ -125,23 +139,40 @@ inline int isolate_conflicts(struct file
+ 					 * might be after the last newline, if there
+ 					 * is one, or might be at the start
+ 					 */
+-					for (k=m[j].al; k>0; k--) 
++					for (k=m[j].al; k>0; k--)
+ 						if (ends_line(af.list[m[j].a+k-1]))
+ 							break;
+-					if (k>0) {
++					if (k > 0)
+ 						m[j].hi = k;
+-						break;
+-					}
+-					if ((m[j].a == 0 || ends_line(af.list[m[j].a-1])) &&
+-					    (m[j].b == 0 || ends_line(bf.list[m[j].b-1])) &&
+-					    (m[j].c == 0 || ends_line(cf.list[m[j].c-1]))){
++					else if ((m[j].a == 0 || ends_line(af.list[m[j].a-1])) &&
++						 (m[j].b == 0 || ends_line(bf.list[m[j].b-1])) &&
++						 (m[j].c == 0 || ends_line(cf.list[m[j].c-1])))
+ 						m[j].hi = 0;
+-						break;
++					else
++						/* no start-of-line found... */
++						m[j].hi = -1;
++					if (m[j].hi > 0 && m[j].type == Changed) {
++						/* this can only work if start is also a linke break */
++						if ((m[j].a == 0 || ends_line(af.list[m[j].a-1])) &&
++						    (m[j].b == 0 || ends_line(bf.list[m[j].b-1])) &&
++						    (m[j].c == 0 || ends_line(cf.list[m[j].c-1])))
++							/* ok */;
++						else
++							m[j].hi = -1;
+ 					}
+-					/* no start-of-line found... */
+-					m[j].hi = -1;
++					if (m[j].hi >= 0)
++						break;
+ 				}
+ 			}
++#if 0
++			if (j>=0 && m[j].in_conflict && m[j].type == Unchanged &&
++			    m[j].hi == m[j].lo) {
++				/* nothing to separate conflicts, merge them */
++				m[j].lo = 0;
++				m[j].hi = -1;
++				cnt--;
++			}
++#endif
+ 			/* now the forward search */
+ 			for (j=i+1; m[j].type != End; j++) {
+ 				m[j].in_conflict = 1;
+@@ -157,19 +188,29 @@ inline int isolate_conflicts(struct file
+ 					 */
+ 					if ((m[j].a == 0 || ends_line(af.list[m[j].a-1])) &&
+ 					    (m[j].b == 0 || ends_line(bf.list[m[j].b-1])) &&
+-					    (m[j].c == 0 || ends_line(cf.list[m[j].c-1]))){
++					    (m[j].c == 0 || ends_line(cf.list[m[j].c-1])))
+ 						m[j].lo = 0;
+-						break;
++					else {
++						for (k = 0 ; k < m[j].al ; k++)
++							if (ends_line(af.list[m[j].a+k]))
++								break;
++						if (k<m[j].al)
++							m[j].lo = k+1;
++						else
++							/* no start-of-line found */
++							m[j].lo = m[j].al+1;
+ 					}
+-					for (k=0; k<m[j].al; k++)
+-						if (ends_line(af.list[m[j].a+k]))
+-							break;
+-					if (k<m[j].al) {
+-						m[j].lo = k+1;
+-						break;
++					if (m[j].lo <= m[j].al+1 && m[j].type == Changed) {
++						/* this can only work if the end is a line break */
++						if (ends_line(af.list[m[j].a+m[j].al-1]) &&
++						    ends_line(bf.list[m[j].b+m[j].bl-1]) &&
++						    ends_line(cf.list[m[j].c+m[j].cl-1]))
++							/* ok */;
++						else
++							m[j].lo = m[j].al+1;
+ 					}
+-					/* no start-of-line found */
+-					m[j].lo = m[j].al+1;
++					if (m[j].lo < m[j].al+1)
++						break;
+ 				}
+ 			}
+ 			i = j;
+@@ -346,11 +387,11 @@ struct ci print_merge2(FILE *out, struct
+ 			 * Unchanged which is < it's hi
+ 			 */
+ 			int st = m->hi;
++			if (m->hi <= m->lo)
++				st = 0;
+ 
+ 			if (m->type == Unchanged)
+ 				printrange(out, a, m->a+m->lo, m->hi - m->lo);
+-			else
+-				printrange(out, c, m->c, m->cl);
+ 
+ #if 1
+ 		if (v)
+@@ -366,7 +407,7 @@ struct ci print_merge2(FILE *out, struct
+ 				       cm->b, cm->b+cm->bl-1,
+ 				       cm->c, cm->c+cm->cl-1, cm->in_conflict?" in_conflict":"",
+ 				       cm->lo, cm->hi);
+-				if (cm->type == Unchanged && cm != m && cm->lo < cm->hi)
++				if ((cm->type == Unchanged ||cm->type == Changed) && cm != m && cm->lo < cm->hi)
+ 					break;
+ 			}
+ #endif
+@@ -393,17 +434,19 @@ struct ci print_merge2(FILE *out, struct
+ 			fputs(words?"===":"=======\n", out);
+ 			st = m->hi;
+ 			for (cm=m; cm->in_conflict; cm++) {
+-				if ((cm->type == Unchanged || cm->type == Changed) && cm != m && cm->lo < cm->hi) {
+-					if (cm->type == Unchanged)
+-						printrange(out, c, cm->c, cm->lo);
++				if (cm->type == Unchanged && cm != m && cm->lo < cm->hi) {
++					printrange(out, c, cm->c, cm->lo);
+ 					break;
+ 				}
++				if (cm->type == Changed)
++					st = 0; /* All of result of change must be printed */
+ 				printrange(out, c, cm->c+st, cm->cl-st);
+ 				st = 0;
+ 			}
+ 			fputs(words?"--->>>":">>>>>>>\n", out);
+ 			m = cm;
+-			if (m->type == Unchanged && m->in_conflict && m->hi >= m->al) {
++			if (m->in_conflict && m->hi >= m->al) {
++				assert(m->type == Unchanged);
+ 				printrange(out, a, m->a+m->lo, m->hi-m->lo);
+ 				m++;
+ 			}
+@@ -414,6 +457,21 @@ struct ci print_merge2(FILE *out, struct
+ 		 */
+ 		if (m->type == End)
+ 			break;
++#if 1
++		if (v) {
++			printf("<<%s: %d-%d,%d-%d,%d-%d%s(%d,%d)>>\n",
++			       m->type==Unmatched?"Unmatched":
++			       m->type==Unchanged?"Unchanged":
++			       m->type==Extraneous?"Extraneous":
++			       m->type==Changed?"Changed":
++			       m->type==AlreadyApplied?"AlreadyApplied":
++			       m->type==Conflict?"Conflict":"unknown",
++			       m->a, m->a+m->al-1,
++			       m->b, m->b+m->bl-1,
++			       m->c, m->c+m->cl-1, m->in_conflict?" in_conflict":"",
++			       m->lo, m->hi);
++		}
++#endif
+ 		switch(m->type) {
+ 		case Unchanged:
+ 		case AlreadyApplied:
+
+diff ./tests/linux/idmap.h/merge~current~ ./tests/linux/idmap.h/merge
+--- ./tests/linux/idmap.h/merge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/idmap.h/merge	2006-05-25 20:59:47.000000000 +1000
+@@ -1,2 +1,20 @@
++<<<<<<<
++|||||||
++*** 55,6 **** 1
++#define IDMAP_STATUS_LOOKUPFAIL IDMAP_STATUS_FAIL
++
++
++/* XXX get (include) from bits/utmp.h */
++#define IDMAP_NAMESZ  128
++
++=======
++*** 55,8 **** 1
++#define IDMAP_STATUS_LOOKUPFAIL IDMAP_STATUS_FAIL
++
++
+ #define IDMAP_MAXMSGSZ   256
+ 
++/* XXX get (include) from bits/utmp.h */
++#define IDMAP_NAMESZ  128
++
++>>>>>>>
+
+diff ./tests/linux/md-resync/merge~current~ ./tests/linux/md-resync/merge
+--- ./tests/linux/md-resync/merge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/md-resync/merge	2006-05-25 20:59:47.000000000 +1000
+@@ -1148,7 +1148,11 @@ abort:
+ 		mempool_destroy(conf->r1buf_pool);
+ 		conf->r1buf_pool = NULL;
+ 	}
++
++	print_conf(conf);
+ =======
++
++	print_conf(conf);
+ >>>>>>>
+ 	return err;
+ }
+@@ -1314,6 +1318,10 @@ static int init_resync (conf_t *conf)
+ 			return -ENOMEM;
+ 
+ <<<<<<<
++	close_sync(conf);
++
++}
++
+ /*
+  * perform a "sync" on one "block"
+  *
+@@ -1472,6 +1480,10 @@ static int raid1_sync_request (mddev_t *
+ 
+ 	return (bsize >> 9);
+ |||||||
++	close_sync(conf);
++
++}
++
+ static int init_resync(conf_t *conf)
+ {
+ *** 1170,9 **** 8
+@@ -1485,6 +1497,19 @@ nomem:
+ 	raid1_shrink_buffers(conf);
+ 	return -ENOMEM;
+ }
++|||||||
++	if (!sector_nr)
++		if (init_resync(conf))
++			return -ENOMEM;
++	/*
++=======
++	if (sector_nr >= max_sector) {
++		close_sync(conf);
++		return 0;
++	}
++
++	/*
++>>>>>>>
+ 
+ static void end_sync_read(struct buffer_head *bh, int uptodate)
+ {
+@@ -1513,37 +1538,7 @@ static void end_sync_write(struct buffer
+ 		int size = bh->b_size;
+ 		raid1_free_buf(r1_bh);
+ 		sync_request_done(sect, mddev_to_conf(mddev));
+-		md_done_sync(mddev,size>>9, uptodate);
+-|||||||
+-	if (!sector_nr)
+-		if (init_resync(conf))
+-			return -ENOMEM;
+-	/*
+-	 * If there is non-resync activity waiting for us then
+-	 * put in a delay to throttle resync.
+-*** 1209,10 **** 9
+-	r1_bio->sector = sector_nr;
+-	r1_bio->cmd = SPECIAL;
+-
+-	max_sector = mddev->sb->size << 1;
+-	if (sector_nr >= max_sector)
+-		BUG();
+-
+-=======
+-	if (sector_nr >= max_sector) {
+-		close_sync(conf);
+-		return 0;
+-	}
+-
+-	/*
+-	 * If there is non-resync activity waiting for us then
+-	 * put in a delay to throttle resync.
+-*** 1190,6 **** 9
+-	r1_bio->sector = sector_nr;
+-	r1_bio->cmd = SPECIAL;
+-
+->>>>>>>
+-	}
++		md_done_sync(mddev,size>>9, uptodate	}
+ }
+ 
+ #define INVALID_LEVEL KERN_WARNING \
+
+diff ./tests/linux/md/lmerge~current~ ./tests/linux/md/lmerge
+--- ./tests/linux/md/lmerge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/md/lmerge	2006-05-25 20:59:47.000000000 +1000
+@@ -1436,12 +1436,6 @@ abort:
+ 	return 1;
+ }
+ 
+-<<<<<<<
+-|||||||
+-#undef OLD_LEVEL
+-
+-=======
+->>>>>>>
+ static struct gendisk *md_probe(dev_t dev, int *part, void *data)
+ {
+ 	static DECLARE_MUTEX(disks_sem);
+
+diff ./tests/linux/md/merge~current~ ./tests/linux/md/merge
+--- ./tests/linux/md/merge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/md/merge	2006-05-25 20:59:47.000000000 +1000
+@@ -1436,12 +1436,6 @@ abort:
+ 	return 1;
+ }
+ 
+-<<<<<<<
+-|||||||
+-#undef OLD_LEVEL
+-
+-=======
+->>>>>>>
+ static struct gendisk *md_probe(dev_t dev, int *part, void *data)
+ {
+ 	static DECLARE_MUTEX(disks_sem);
+
+diff ./tests/linux/md/wmerge~current~ ./tests/linux/md/wmerge
+--- ./tests/linux/md/wmerge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/md/wmerge	2006-05-25 20:59:47.000000000 +1000
+@@ -1436,9 +1436,7 @@ abort:
+ 	return 1;
+ }
+ 
+-<<<---|||#undef OLD_LEVEL
+-
+-===--->>>static struct gendisk *md_probe(dev_t dev, int *part, void *data)
++static struct gendisk *md_probe(dev_t dev, int *part, void *data)
+ {
+ 	static DECLARE_MUTEX(disks_sem);
+ 	int unit = MINOR(dev);
+
+diff ./tests/linux/raid5build/merge~current~ ./tests/linux/raid5build/merge
+--- ./tests/linux/raid5build/merge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/raid5build/merge	2006-05-25 20:59:47.000000000 +1000
+@@ -22,8 +22,12 @@ static void raid5_build_block (struct st
+ 	dev->flags = 0;
+ 	if (i != sh->pd_idx)
+ <<<<<<<
++	bh->b_size	= sh->size;
+ 	bh->b_list	= BUF_LOCKED;
++	return bh;
+ |||||||
++	bh->b_size	= sh->size;
++	return bh;
+ =======
+ 		dev->sector = compute_blocknr(sh, i);
+ >>>>>>>
+
+diff ./tests/linux/raid5line/lmerge~current~ ./tests/linux/raid5line/lmerge
+--- ./tests/linux/raid5line/lmerge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/raid5line/lmerge	2006-05-25 20:59:47.000000000 +1000
+@@ -1,7 +1,9 @@
+ <<<<<<<
+ 		clear_bit(BH_Uptodate, &sh->bh_cache[i]->b_state);
+ |||||||
++*** 1,1 **** 1
+ 		clear_buffer_uptodate(sh->bh_cache[i]);
+ =======
++*** 1,1 **** 1
+ 		dev->flags = 0;
+ >>>>>>>
+
+diff ./tests/linux/raid5line/merge~current~ ./tests/linux/raid5line/merge
+--- ./tests/linux/raid5line/merge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/raid5line/merge	2006-05-25 20:59:47.000000000 +1000
+@@ -1,7 +1,9 @@
+ <<<<<<<
+ 		clear_bit(BH_Uptodate, &sh->bh_cache[i]->b_state);
+ |||||||
++*** 1,1 **** 1
+ 		clear_buffer_uptodate(sh->bh_cache[i]);
+ =======
++*** 1,1 **** 1
+ 		dev->flags = 0;
+ >>>>>>>
+
+diff ./tests/linux/raid5line/wmerge~current~ ./tests/linux/raid5line/wmerge
+--- ./tests/linux/raid5line/wmerge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/raid5line/wmerge	2006-05-25 20:59:47.000000000 +1000
+@@ -1 +1,3 @@
+-<<<---		clear_bit(BH_Uptodate, &|||clear_buffer_uptodate(===dev--->>>-><<<---->b_state|||===flags = 0--->>>;
++<<<---		clear_bit(BH_Uptodate, &|||*** 1,1 **** 1
++		clear_buffer_uptodate(===*** 1,1 **** 1
++		dev--->>>-><<<---->b_state|||===flags = 0--->>>;
+
+diff ./tests/linux/rpc_tcp_nonagle/merge~current~ ./tests/linux/rpc_tcp_nonagle/merge
+--- ./tests/linux/rpc_tcp_nonagle/merge~current~	2006-05-25 20:57:47.000000000 +1000
++++ ./tests/linux/rpc_tcp_nonagle/merge	2006-05-25 20:59:47.000000000 +1000
+@@ -1036,9 +1036,11 @@ svc_tcp_init(struct svc_sock *svsk)
+ <<<<<<<
+ 		/* initialise setting must have enough space to
+ |||||||
++                /* initialise setting must have enough space to
+ =======
+                tp->nonagle = 1;        /* disable Nagle's algorithm */
+ 
++                /* initialise setting must have enough space to
+ >>>>>>>
+ 		 * receive and respond to one request.  
+ 		 * svc_tcp_recvfrom will re-adjust if necessary
+
+diff ./wiggle.h~current~ ./wiggle.h
+--- ./wiggle.h~current~	2006-05-25 20:59:45.000000000 +1000
++++ ./wiggle.h	2006-05-25 20:59:51.000000000 +1000
+@@ -71,13 +71,36 @@ struct file {
+ 	int elcnt;
+ };
+ 
++/* The result of a merger is a series of text sections.
++ * Each section may occur in one or more of the three stream,
++ * and may be different in different stream (e.g. for changed text)
++ * or the same.
++ * When a conflict occurs we need to treat some surrouding
++ * sections as being involved in that conflict.  For
++ * word-based merging, all surrounding sections until an Unchanged
++ * section are part of the conflict - the Unchanged isn't.
++ * For line based merging, we need to find Unchanged sections
++ * that include a newline.  Further, text within the unchanged
++ * section upto the newline (in whichever direction) is treated
++ * as part of the whole conflict.
++ * Actually... it is possibly for a 'Changed' section to bound
++ * a conflict as it indicates a successful match of A and B.
++ * For wordwise merges, any Changed or Unchanged section bounds a conflict
++ * For linewise merges, and Changed or Unchanged section that matches
++ * a newline, or immediately follows a newline (in all files) can bound
++ * a conflict.
++ */
+ struct merge {
+ 	enum mergetype {End, Unmatched, Unchanged, Extraneous, Changed, Conflict, AlreadyApplied} type;
+ 	int a,b,c; /* start of ranges */
+ 	int al, bl, cl; /* length of ranges */
+ 	int c1, c2; /* this or next commonsequence */
+ 	int in_conflict; 
+-	int lo,hi; /* region of an Unchanged that is not involved in a conflict */
++	int lo,hi; /* region of an Unchanged that is not involved in a conflict
++		    * These are distances from start of the section, not
++		    * indexes into any file
++		    */
++
+ };
+ extern struct stream load_file(char *name);
+ extern int split_patch(struct stream, struct stream*, struct stream*);

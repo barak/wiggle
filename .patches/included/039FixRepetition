@@ -1,0 +1,33 @@
+Status: ok
+
+When calling a recursive p, use $0 to find it.
+
+This applied to recommit and decommit
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./p |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff .prev/p ./p
+--- .prev/p	2006-06-13 22:57:04.000000000 +1000
++++ ./p	2006-06-13 22:57:06.000000000 +1000
+@@ -818,7 +818,7 @@ case $cmd in
+ 	then echo >&2 "Cannot find unique patch '$1' - found: $pfile"; exit 1
+ 	fi
+ 	while [ -s "$pfile" ]  &&
+-	     p apply last && p commit ; do : ; done
++		$0 apply last && $0 commit ; do : ; done
+ 	;;
+   decommit )
+ 	make_diff
+@@ -845,7 +845,7 @@ case $cmd in
+ 	then echo >&2 "Cannot find unique patch '$1' - found: $pfile"; exit 1
+ 	fi
+ 	while [ -s "$pfile" ]  &&
+-	     p open last && p discard ; do : ; done
++	     $0 open last && $0 discard ; do : ; done
+ 	;;
+   snapshot )
+ 	all_files snap_one

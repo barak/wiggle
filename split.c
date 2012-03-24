@@ -15,26 +15,29 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software Foundation, Inc.,
- *    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *    Author: Neil Brown
  *    Email: <neilb@suse.de>
  */
 
 /*
- * Split a stream into words or line
+ * split a stream into words or line
+ * When splitting into words we can either be approximate or precise.
+ *  Precise mode includes every char in a word.
+ *  Approximate mode excluses white-space words and might unite some special chars
  *
- * A word is one of:
+ * In general, a word is one of:
  *    string of [A-Za-z0-9_]
  *    or string of [ \t]
- *    or single char (i.e. punctuation and newlines).
+ *    or single char.
  *
  * A line is any string that ends with \n
  *
  * As a special case to allow proper aligning of multiple chunks
- * in a patch, a word starting \0 will include 20 chars with a newline
- * second from the end.
+ * in a patch, a word starting \0 will include 5 chars and a newline
+ *
  *
  * We make two passes through the stream.
  * Firstly we count the number of item so an array can be allocated,
@@ -45,64 +48,59 @@
 #include	"wiggle.h"
 #include	<stdlib.h>
 #include	<ctype.h>
-#include	<stdlib.h>
+#include	<malloc.h>
 #define BITS_PER_LONG 32
 
 #include "hash.h"
 
-static int split_internal(char *start, char *end, int type,
-			  struct elmnt *list)
+static int split_internal(char *start, char *end, int type, struct elmnt *list, int reverse)
 {
 	int cnt = 0;
 
 	while (start < end) {
 		char *cp = start;
 
-		if (*cp == '\0' && cp+19 < end && cp[18] == '\n') {
+		if (*cp == '\0' && cp+16 < end && cp[18] == '\n') {
 			/* special word */
-			cp += 20;
-		} else
-			switch (type) {
-			case ByLine:
-				while (cp < end && *cp != '\n')
-					cp++;
-				if (cp < end)
-					cp++;
-				break;
-			case ByWord:
-				if (isalnum(*cp) || *cp == '_') {
-					do
-						cp++;
-					while (cp < end
-					       && (isalnum(*cp)
-						   || *cp == '_'));
-				} else if (*cp == ' ' || *cp == '\t') {
-					do
-						cp++;
-					while (cp < end
-					       && (*cp == ' '
-						   || *cp == '\t'));
-				} else
-					cp++;
-				break;
-			}
-		if (list) {
-			list->start = start;
-			list->len = cp-start;
-			if (*start)
-				list->hash = hash_mem(start, list->len,
-						      BITS_PER_LONG);
-			else
-				list->hash = atoi(start+1);
-			list++;
+			cp += 19;
+		} else switch(type) {
+		case ByLine:
+			while (cp < end && *cp != '\n')
+				cp++;
+			if (cp<end) cp++;
+			break;
+		case ByWord:
+		case ApproxWord:
+			if (isalnum(*cp) || *cp == '_') {
+				do cp++;
+				while (cp<end && (isalnum(*cp)  || *cp == '_'));
+			} else if (*cp == ' ' || *cp == '\t') {
+				do cp++;
+				while (cp<end && (*cp == ' ' || *cp == '\t'));
+			} else
+				cp++;
+			break;
 		}
-		cnt++;
+		if (type != ApproxWord || *start =='\0' ||
+		    (isalnum(*start) || *start == '_')) {
+			if (list) {
+				if (reverse) list--;
+				list->start = start;
+				list->len = cp-start;
+				if (*start)
+					list->hash = hash_mem(start, list->len, BITS_PER_LONG);
+				else
+					list->hash = atoi(start+1);
+				if (!reverse) list++;
+			}
+			cnt++;
+		}
 		start = cp;
 	}
 	return cnt;
 }
 
-struct file split_stream(struct stream s, int type)
+struct file split_stream(struct stream s, int type, int reverse)
 {
 	int cnt;
 	struct file f;
@@ -112,9 +110,10 @@ struct file split_stream(struct stream s, int type)
 	end = s.body+s.len;
 	c = s.body;
 
-	cnt = split_internal(c, end, type, NULL);
+	cnt = split_internal(c, end, type, NULL, reverse);
+/*	fprintf(stderr, "cnt %d\n", cnt);*/
 	f.list = malloc(cnt*sizeof(struct elmnt));
 
-	f.elcnt = split_internal(c, end, type, f.list);
+	f.elcnt = split_internal(c, end, type, f.list + reverse*cnt, reverse);
 	return f;
 }

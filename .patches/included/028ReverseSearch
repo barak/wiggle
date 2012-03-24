@@ -1,0 +1,94 @@
+Status: ok
+
+Support searching backwards too.
+
+
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./TODO     |    3 +++
+ ./vpatch.c |   31 ++++++++++++++++++++++++++-----
+ 2 files changed, 29 insertions(+), 5 deletions(-)
+
+diff ./TODO~current~ ./TODO
+--- ./TODO~current~	2006-06-03 20:43:00.000000000 +1000
++++ ./TODO	2006-06-03 22:04:15.000000000 +1000
+@@ -183,6 +183,9 @@ DONE - blank after end and before begini
+      DONE   next/prev diff
+         next/prev conflict
+         incr-search
++        find char pos in search and highlight
++        multiple finds per line
++	switch from forward to reverse.
+      DONE   page up/down
+      DONE   beginning/end of line
+         left-right to handle line breaks.
+
+diff ./vpatch.c~current~ ./vpatch.c
+--- ./vpatch.c~current~	2006-06-03 21:55:06.000000000 +1000
++++ ./vpatch.c	2006-06-03 21:59:15.000000000 +1000
+@@ -1361,6 +1361,7 @@ void merge_window(struct plist *p, FILE 
+ 	char search[80];
+ 	int searchlen = 0;
+ 	int search_notfound = 0;
++	int searchdir;
+ 	struct search_anchor {
+ 		struct search_anchor *next;
+ 		struct mpos pos;
+@@ -1507,6 +1508,7 @@ void merge_window(struct plist *p, FILE 
+ 		if (num>=0) { char buf[10]; sprintf(buf, "%d ", num); addstr(buf);}
+ 		if (meta & META(0)) addstr("ESC...");
+ 		if (meta & SEARCH(0)) {
++			if (searchdir) addstr("Backwards ");
+ 			addstr("Search: ");
+ 			addstr(search);
+ 			if (search_notfound)
+@@ -1557,14 +1559,28 @@ void merge_window(struct plist *p, FILE 
+ 			meta = SEARCH(0);
+ 			searchlen = 0;
+ 			search[searchlen] = 0;
++			searchdir = 0;
++			break;
++		case '\\':
++		case 'R'-64:
++			/* incr search backwards */
++			meta = SEARCH(0);
++			searchlen = 0;
++			search[searchlen] = 0;
++			searchdir = 1;
+ 			break;
+ 		case SEARCH('G'-64):
+ 		case SEARCH('S'-64):
+ 			/* search again */
+ 			meta = SEARCH(0);
+ 			tpos = pos; trow = row;
+-			trow++;
+-			next_mline(&tpos, fm,fb,fa,ci.merger,mode);
++			if (searchdir) {
++				trow--;
++				prev_mline(&tpos, fm,fb,fa,ci.merger,mode);
++			} else {
++				trow++;
++				next_mline(&tpos, fm,fb,fa,ci.merger,mode);
++			}
+ 			goto search_again;
+ 
+ 		case SEARCH('H'-64):
+@@ -1605,9 +1621,14 @@ void merge_window(struct plist *p, FILE 
+ 					search_notfound = 0;
+ 					break;
+ 				}
+-				trow++;
+-				next_mline(&tpos, fm,fb,fa,ci.merger,mode);
+-			} while (ci.merger[tpos.p.m].type != End);
++				if (searchdir) {
++					trow--;
++					prev_mline(&tpos, fm,fb,fa,ci.merger,mode);
++				} else {
++					trow++;
++					next_mline(&tpos, fm,fb,fa,ci.merger,mode);
++				}
++			} while (tpos.p.m >= 0 && ci.merger[tpos.p.m].type != End);
+ 
+ 			break;
+ 		case 'L'-64:

@@ -1,0 +1,193 @@
+
+hash.h,254
+#define GOLDEN_RATIO_PRIME 16,612
+#define GOLDEN_RATIO_PRIME 19,729
+static inline unsigned long hash_long(24,843
+static inline unsigned long hash_ptr(52,1404
+static inline unsigned long hash_str(57,1521
+static inline unsigned long hash_mem(75,1893
+
+wiggle.h,860
+struct stream 34,1156
+struct elmnt 40,1200
+static  inline int match(46,1254
+static inline int ends_line(54,1414
+static inline int ends_mline(59,1507
+struct csl 64,1595
+struct file 69,1632
+struct merge 93,2706
+	enum mergetype 94,2721
+	enum mergetype {End,End94,2721
+	enum mergetype {End, Unmatched,94,2721
+	enum mergetype {End, Unmatched, Unchanged,94,2721
+	enum mergetype {End, Unmatched, Unchanged, Extraneous,94,2721
+	enum mergetype {End, Unmatched, Unchanged, Extraneous, Changed,94,2721
+	enum mergetype {End, Unmatched, Unchanged, Extraneous, Changed, Conflict,94,2721
+	enum mergetype {End, Unmatched, Unchanged, Extraneous, Changed, Conflict, AlreadyApplied}AlreadyApplied94,2721
+struct ci 116,3744
+static inline char *short_options(short_options139,4535
+#define	ByLine	152,4821
+#define	ByWord	153,4838
+#define	ApproxWord 154,4855
+
+bestmatch.c,487
+struct v 64,2151
+static inline void update_value(108,4348
+static inline int best_val(129,4711
+#define value(139,4867
+# define value(142,4935
+# define value(144,4997
+struct best 148,5078
+static inline int min(152,5122
+void find_best(156,5186
+struct csl *csl_join(csl_join262,7661
+static void printword(286,8077
+static inline int is_skipped(308,8684
+struct file reduce(314,8811
+void remap(341,9432
+static void find_best_inorder(403,10871
+struct csl *pdiff(pdiff450,12045
+
+diff.c,212
+struct v 54,1898
+static int find_common(61,2100
+static struct csl *lcsl(lcsl177,4269
+static void fixup(259,6130
+struct csl *diff(diff343,7967
+struct csl *diff_partial(diff_partial364,8342
+main(383,8673
+
+extract.c,97
+void skip_eol(39,1199
+void copyline(48,1323
+int split_patch(61,1557
+int split_merge(197,4372
+
+load.c,152
+static void join_streams(48,1421
+static struct stream load_regular(74,1897
+static struct stream load_other(91,2168
+struct stream load_file(116,2547
+
+merge2.c,230
+static inline int min(53,1864
+static inline void assert(57,1921
+int check_alreadyapplied(62,1977
+inline int isolate_conflicts(86,2530
+struct ci make_merger(222,6537
+void printrange(348,9928
+struct ci print_merge2(357,10071
+
+merge.c,468
+struct point 200,9244
+static int tripoint(203,9290
+static int retreat(254,10214
+static int advance(368,12581
+static int point_crossed(492,15678
+static void print_merger(509,16034
+static int inline at_sol(531,16555
+static void print_range(537,16670
+static int print_conflict(543,16811
+static int end_of_file(619,18727
+static int next_conflict(624,18833
+static int already_applied(789,23936
+static int Startofline(815,24529
+struct ci print_merge(825,24774
+
+patch_depends.c,188
+struct chunk 21,619
+struct file 29,851
+struct patch 34,965
+} *patches patches39,1211
+void report(43,1233
+int check_depends(56,1428
+void add_depends(67,1661
+void add_chunk(82,2000
+
+ReadMe.c,360
+char Version[Version32,1026
+char short_options1[short_options134,1079
+char short_options2[short_options235,1139
+struct option long_options[long_options38,1198
+char Usage[Usage57,1607
+char Help[Help60,1713
+char HelpExtract[HelpExtract95,3071
+char HelpDiff[HelpDiff108,3556
+char HelpMerge[HelpMerge128,4465
+char HelpBrowse[HelpBrowse150,5496
+
+split.c,101
+#define BITS_PER_LONG 57,1895
+static int split_internal(61,1940
+struct file split_stream(108,2953
+
+vpatch.c,1923
+#define assert(62,2060
+struct plist 64,2115
+struct plist *patch_add_file(patch_add_file74,2266
+struct plist *parse_patch(parse_patch113,3228
+void die(178,4679
+static struct stream load_segment(186,4764
+void catch(204,5071
+int pl_cmp(215,5227
+int common_depth(222,5367
+struct plist *add_dir(add_dir246,5805
+struct plist *sort_patches(sort_patches277,6478
+int get_strip(317,7318
+int set_prefix(337,7583
+int get_prev(366,8149
+int get_next(378,8386
+int a_delete,395,8684
+int a_delete, a_added,395,8684
+int a_delete, a_added, a_common,395,8684
+int a_delete, a_added, a_common, a_sep,395,8684
+int a_delete, a_added, a_common, a_sep, a_void,395,8684
+int a_delete, a_added, a_common, a_sep, a_void, a_unmatched,395,8684
+int a_delete, a_added, a_common, a_sep, a_void, a_unmatched, a_extra,395,8684
+int a_delete, a_added, a_common, a_sep, a_void, a_unmatched, a_extra, a_already;395,8684
+void draw_one(397,8766
+void addword(467,10354
+void addsep(471,10413
+#define BEFORE	482,10682
+#define AFTER	483,10699
+#define	ORIG	484,10715
+#define	RESULT	485,10730
+#define CHANGED 486,10747
+#define CHANGES 487,10804
+struct pos 489,10859
+struct elmnt prev_elmnt(492,10887
+struct elmnt next_elmnt(529,11631
+void pos_sol(569,12377
+void prev_pos(586,12775
+void next_pos(610,13268
+void draw_line(632,13721
+void diff_window(692,15022
+struct mpos 831,17691
+	struct mp 832,17705
+int same_mpos(844,18078
+int invalid(852,18213
+struct elmnt next_melmnt(866,18483
+struct elmnt prev_melmnt(905,19334
+int visible(939,20149
+void next_mline(1032,22576
+void prev_mline(1084,23783
+void blank(1127,24817
+int check_line(1145,25306
+int mcontains(1173,26075
+void draw_mside(1195,26628
+void draw_mline(1258,28280
+void merge_window(1309,29639
+	struct search_anchor 1365,31194
+#define META(1504,35256
+#define	SEARCH(1505,35285
+void main_window(1803,41282
+int vpatch(1937,44197
+ WiggleVerbose=2028,46060
+
+wiggle.c,140
+char *Cmd Cmd88,3357
+void die(90,3380
+void printword(97,3458
+static void printsep(108,3671
+void cleanlist(120,3976
+int main(144,4402

@@ -1,0 +1,14 @@
+
+author = Neil Brown <neilb@suse.de>
+header = X-faces: something
+header = "  something else
+maintainer = N
+tagline = Signed-off-by: Neil Brown <neilb@suse.de>
+
+[test]
+ cc = him and her
+ tag = test-tage
+
+[frog]
+ cc = princess
+ tag = beauty
