@@ -5,7 +5,7 @@ Subject: conditional arms
 Silence warning about B missing in conditional construct ( A ? B : C )
 ---
  vpatch.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/vpatch.c b/vpatch.c
 index 36ecb16..8fe296f 100644
@@ -29,4 +29,3 @@ index 36ecb16..8fe296f 100644
  		if (pos > target2)
  			end -= (pos - target2) - 1;
  		plist = patch_add_file(plist, np,
--- 
