@@ -3,7 +3,7 @@ Section: vcs
 Priority: optional
 Maintainer: Jari Aalto <jari.aalto@cante.net>
 Build-Depends: debhelper (>= 9), time, groff, libncurses5-dev
-Standards-Version: 3.9.3.1
+Standards-Version: 3.9.4
 Vcs-Browser: http://git.debian.org/?p=collab-maint/wiggle.git
 Vcs-Git: git://git.debian.org/git/collab-maint/wiggle.git
 Homepage: http://cgi.cse.unsw.edu.au/~neilb/source/wiggle/
