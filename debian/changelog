@@ -1,3 +1,19 @@
+wiggle (0.8+dfsg1-1) unstable; urgency=low
+
+  * Repackage upstream tarball: remove .git and non-free *.ps
+    documentation about used algorithm (Closes: #698846). Upstream
+    has removed the file in the next release.
+  * debian/control
+    - (Standards-Version): Update to 3.9.4.
+  * debian/copyright
+    - Update year.
+  * debian/docs
+    - Add missing newline to the last line.
+  * debian/wiggle.docs
+    - Delete file due to #698846. There is already debian/docs.
+
+ -- Jari Aalto <jari.aalto@cante.net>  Tue, 19 Feb 2013 16:17:03 +0200
+
 wiggle (0.8-2) unstable; urgency=low
 
   * debian/control
