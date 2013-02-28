@@ -1,3 +1,12 @@
+wiggle (0.8+dfsg1-2) unstable; urgency=low
+
+  * debian/control
+    - (Homepage): Update broken URL to Freecode (Closes: #699715).
+  * debian/copyright
+    - Update upstream URL locations. See above bug.
+
+ -- Jari Aalto <jari.aalto@cante.net>  Thu, 28 Feb 2013 10:59:53 +0200
+
 wiggle (0.8+dfsg1-1) unstable; urgency=low
 
   * Repackage upstream tarball: remove .git and non-free *.ps
