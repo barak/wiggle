@@ -1,12 +1,11 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0
 Upstream-Name: wiggle
 Upstream-Contact: Neil Brown <neilb@suse.de>
-Source: git://neil.brown.name/wiggle
-X-Upstream-Vcs: git://neil.brown.name/wiggle
-X-Upstream-Bugs:
-X-Source: http://neil.brown.name/git?p=wiggle;a=summary
+Source: http://neil.brown.name/wiggle
+X-Source: http://freecode.com/projects/wiggle
+X-Upstream-Vcs: http://git.neil.brown.name/git/wiggle
 X-Upstream-Comment:
- Upstream homepage at http://neil.brown.name
+ Upstream homepage is at http://neil.brown.name
 
 Files: *
 Copyright:
