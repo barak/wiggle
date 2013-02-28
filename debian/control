@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 9), time, groff, libncurses5-dev
 Standards-Version: 3.9.4
 Vcs-Browser: http://git.debian.org/?p=collab-maint/wiggle.git
 Vcs-Git: git://git.debian.org/git/collab-maint/wiggle.git
-Homepage: http://cgi.cse.unsw.edu.au/~neilb/source/wiggle/
+Homepage: http://freecode.com/projects/wiggle
 
 Package: wiggle
 Architecture: any
